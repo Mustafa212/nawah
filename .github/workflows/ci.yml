@@ -61,3 +61,5 @@ jobs:
         run: bash tests/lint_backlog_test.sh
       - name: item hash
         run: bash tests/item_hash_test.sh
+      - name: file contracts
+        run: bash tests/check.sh
