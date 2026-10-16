@@ -1,0 +1,22 @@
+# Checks the manifests, the report model, the scripts, the report template and the file contracts.
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  manifests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: plugin.json and marketplace.json parse and agree on the name
+        run: |
+          name=$(jq -er .name .claude-plugin/plugin.json)
+          [ "$(jq -er '.plugins[0].name' .claude-plugin/marketplace.json)" = "$name" ]
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: claude plugin validate
+        run: npx -y @anthropic-ai/claude-code@2.1.301 plugin validate .
