@@ -1,7 +1,209 @@
 <!doctype html>
 <html lang="en" dir="ltr">
-<head><meta charset="utf-8"><title>nawah report</title></head>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>nawah report</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&family=IBM+Plex+Sans+Arabic:wght@400;600;700&display=swap">
+<style>
+:root {
+  --ink: #1d2433; --muted: #5b6475; --line: #dfe3ea; --paper: #ffffff; --tint: #f5f7fa;
+  --accent: #1f6feb; --good: #0e7a55; --warn: #b45309; --bad: #b42318;
+}
+@page {
+  size: A4; margin: 18mm 16mm 20mm;
+  @bottom-center { content: counter(page); font: 9pt "IBM Plex Sans", "Segoe UI", sans-serif; color: #5b6475; }
+}
+@page :first { @bottom-center { content: none; } }
+* { box-sizing: border-box; }
+html { background: var(--paper); }
+body { margin: 0; color: var(--ink); font: 10.5pt/1.6 "IBM Plex Sans", "Segoe UI", "Noto Sans", Arial, sans-serif; }
+html[lang="ar"] body { font-family: "IBM Plex Sans Arabic", "Segoe UI", "Noto Sans Arabic", Tahoma, sans-serif; line-height: 1.75; }
+main { max-width: 178mm; margin: 0 auto; }
+.cover { min-height: 250mm; display: flex; flex-direction: column; justify-content: center; break-after: page; }
+.cover .kicker { color: var(--accent); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; font-size: 10pt; }
+html[lang="ar"] .cover .kicker { letter-spacing: 0; }
+.cover h1 { font-size: 28pt; line-height: 1.2; margin: 6mm 0 4mm; }
+.cover .oneliner { font-size: 13pt; color: var(--muted); max-width: 150mm; margin: 0; }
+.cover .meta { margin-top: 24mm; padding-top: 4mm; border-top: 2px solid var(--accent); display: flex; flex-wrap: wrap; gap: 4mm 10mm; font-size: 10pt; color: var(--muted); }
+section { break-before: page; }
+h2 { display: flex; justify-content: space-between; align-items: baseline; gap: 4mm; font-size: 17pt; margin: 0 0 5mm; padding-bottom: 2mm; border-bottom: 2px solid var(--line); }
+h3 { font-size: 12pt; margin: 6mm 0 2mm; break-after: avoid; }
+p, li { orphans: 3; widows: 3; }
+.confidence { flex: none; font-size: 8.5pt; font-weight: 600; padding: 1mm 3mm; border-radius: 99px; background: var(--tint); color: var(--muted); }
+.confidence[data-level="High"] { color: var(--good); }
+.confidence[data-level="Medium"] { color: var(--warn); }
+.confidence[data-level="Low"] { color: var(--bad); }
+.reco { font-size: 12pt; font-weight: 700; margin: 0 0 4mm; }
+.reco[data-v="Go"] { color: var(--good); }
+.reco[data-v="Go with conditions"] { color: var(--warn); }
+.reco[data-v="No-Go"] { color: var(--bad); }
+.kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3mm; margin: 0 0 6mm; }
+.kpi { border: 1px solid var(--line); border-radius: 3mm; padding: 3mm 4mm; break-inside: avoid; }
+.kpi .v { font-size: 13pt; font-weight: 700; }
+.kpi .l { font-size: 8.5pt; color: var(--muted); }
+table { width: 100%; border-collapse: collapse; margin: 3mm 0 5mm; font-size: 9.5pt; }
+tr { break-inside: avoid; }
+th, td { text-align: start; vertical-align: top; padding: 2mm 2.5mm; border-bottom: 1px solid var(--line); }
+th { background: var(--tint); font-weight: 600; }
+figure { margin: 2mm 0 6mm; break-inside: avoid; }
+figcaption { font-size: 8.5pt; color: var(--muted); margin-top: 1.5mm; }
+svg { display: block; width: 100%; height: auto; direction: ltr; }
+svg text { font-family: inherit; font-size: 11px; fill: var(--ink); }
+.callout { background: var(--tint); border-inline-start: 3px solid var(--accent); padding: 3mm 4mm; margin: 3mm 0 5mm; }
+.sources { padding-inline-start: 0; list-style: none; font-size: 8.5pt; }
+.sources li { margin-bottom: 1.5mm; overflow-wrap: anywhere; }
+sup a { color: var(--accent); text-decoration: none; font-size: 7.5pt; }
+a { color: var(--accent); }
+#nawah-error { display: none; }
+html[data-nawah="error"] #nawah-error { display: block; position: sticky; top: 0; z-index: 9; margin: 0; padding: 4mm 6mm; white-space: pre-wrap; font: 10pt/1.5 Consolas, monospace; color: var(--bad); background: #fdecea; border-bottom: 2px solid var(--bad); }
+@media screen {
+  html { background: #e9edf2; }
+  main { max-width: 210mm; margin: 8mm auto; padding: 18mm 16mm; background: var(--paper); box-shadow: 0 1px 8px rgba(0, 0, 0, .12); }
+  section { margin-top: 16mm; }
+}
+</style>
+</head>
 <body>
+<pre id="nawah-error"></pre>
+<main>
+<header class="cover">
+  <div class="kicker" id="cover-kicker"></div>
+  <h1 id="cover-title"></h1>
+  <p class="oneliner" id="cover-oneliner"></p>
+  <div class="meta" id="cover-meta"></div>
+</header>
+
+<section id="exec-summary">
+  <h2><span data-t></span><span class="confidence" data-level=""></span></h2>
+  <p class="reco" data-reco></p>
+  <div class="kpis" data-chart="kpis"></div>
+  <!-- SLOT exec-summary -->
+</section>
+
+<section id="problem-customer">
+  <h2><span data-t></span><span class="confidence" data-level=""></span></h2>
+  <!-- SLOT problem-customer -->
+</section>
+
+<section id="solution-value">
+  <h2><span data-t></span><span class="confidence" data-level=""></span></h2>
+  <!-- SLOT solution-value -->
+</section>
+
+<section id="market">
+  <h2><span data-t></span><span class="confidence" data-level=""></span></h2>
+  <figure data-chart="funnel"></figure>
+  <!-- SLOT market -->
+</section>
+
+<section id="competition">
+  <h2><span data-t></span><span class="confidence" data-level=""></span></h2>
+  <figure data-chart="positioning"></figure>
+  <!-- SLOT competition -->
+</section>
+
+<section id="financials">
+  <h2><span data-t></span><span class="confidence" data-level=""></span></h2>
+  <figure data-chart="revenue"></figure>
+  <!-- SLOT financials -->
+</section>
+
+<section id="go-to-market">
+  <h2><span data-t></span><span class="confidence" data-level=""></span></h2>
+  <!-- SLOT go-to-market -->
+</section>
+
+<section id="delivery">
+  <h2><span data-t></span><span class="confidence" data-level=""></span></h2>
+  <figure data-chart="gantt"></figure>
+  <!-- SLOT delivery -->
+</section>
+
+<section id="validation">
+  <h2><span data-t></span><span class="confidence" data-level=""></span></h2>
+  <!-- SLOT validation -->
+</section>
+
+<section id="risks">
+  <h2><span data-t></span><span class="confidence" data-level=""></span></h2>
+  <!-- SLOT risks -->
+</section>
+
+<section id="closing">
+  <h2><span data-t></span><span class="confidence" data-level=""></span></h2>
+  <!-- SLOT closing -->
+</section>
+
+<section id="appendix">
+  <h2><span data-t></span><span class="confidence" data-level=""></span></h2>
+  <!-- SLOT appendix -->
+  <h3 id="appendix-assumptions-h"></h3>
+  <table id="assumptions-table"></table>
+  <h3 id="appendix-sources-h"></h3>
+  <ol class="sources" id="sources-list"></ol>
+</section>
+</main>
+
+<script type="application/json" id="nawah-data">
+{
+  "meta": {
+    "title": "Qahwa Points: shared loyalty for independent coffee shops",
+    "oneLiner": "For independent coffee shops in Cairo that lose regulars to the chains, Qahwa Points is a shared loyalty app that rewards visits across a network of shops; unlike paper stamp cards, it brings customers back to any member shop.",
+    "lang": "en",
+    "audience": "investor",
+    "recommendation": "Go with conditions",
+    "currency": "EGP",
+    "usdRate": 0.0204,
+    "usdRateSource": 4,
+    "date": "2026-10-16",
+    "version": 1,
+    "preparedBy": "Example Ventures (fixture: every figure, company and source is invented)"
+  },
+  "market": { "tam": 2400000000, "sam": 360000000, "som": 18000000, "sources": [1] },
+  "assumptions": {
+    "arpu": 900, "grossMargin": 0.8, "churn": 0.03, "cac": 2500,
+    "newCustomersMonth1": 15, "monthlyGrowth": 0.08, "fixedMonthlyCost": 60000
+  },
+  "scenarios": {
+    "conservative": { "newCustomersMonth1": 8, "monthlyGrowth": 0.05, "churn": 0.05 },
+    "base": {},
+    "optimistic": { "newCustomersMonth1": 25, "monthlyGrowth": 0.1, "churn": 0.02 }
+  },
+  "team": { "developers": 2, "monthlyCost": 160000 },
+  "capabilities": [
+    { "name": "Shop sign-up and QR stamps", "release": "MVP", "size": "M" },
+    { "name": "Customer app: points and rewards", "release": "MVP", "size": "M" },
+    { "name": "Shop dashboard", "release": "MVP", "size": "S" },
+    { "name": "Cross-shop rewards network", "release": "v1", "size": "L" },
+    { "name": "Promotions and push campaigns", "release": "v2", "size": "M" }
+  ],
+  "competitors": [
+    { "name": "Example Stamp Card", "url": "https://example.com/stamp", "scope": "local", "x": 2, "y": 3 },
+    { "name": "Example Chain App", "url": "https://example.com/chain", "scope": "local", "x": 6, "y": 7 },
+    { "name": "Example Global Loyalty", "url": "https://example.org/loyalty", "scope": "global", "x": 8, "y": 6 }
+  ],
+  "positioning": {
+    "x": "Price to the shop (low → high)",
+    "y": "Reach across shops (low → high)",
+    "us": { "x": 3, "y": 8 }
+  },
+  "assumptionNotes": [
+    { "key": "arpu", "note": "Monthly subscription per shop, below the chain app's fee", "source": 3 },
+    { "key": "churn", "note": "Small-business software benchmark", "source": 3 },
+    { "key": "cac", "note": "One field-sales visit plus onboarding" },
+    { "key": "team.monthlyCost", "note": "Two mid-level developers in Cairo", "source": 2 }
+  ],
+  "sources": [
+    { "id": 1, "title": "Example: Egypt café market report 2026", "url": "https://example.com/cafe-report", "accessed": "2026-10-16" },
+    { "id": 2, "title": "Example: developer salary survey, Cairo", "url": "https://example.com/salaries", "accessed": "2026-10-16" },
+    { "id": 3, "title": "Example: small-business software benchmarks", "url": "https://example.org/benchmarks", "accessed": "2026-10-16" },
+    { "id": 4, "title": "Example: central bank exchange rates", "url": "https://example.com/rates", "accessed": "2026-10-16" }
+  ]
+}
+</script>
 <script id="nawah-model">
 /* nawah model: pure functions, no DOM. Tested by tests/model_test.js. */
 (function (root) {
@@ -220,6 +422,286 @@
     drift, buildCost, formatters, computeAll, RELEASES, SCENARIOS,
   };
 })(typeof globalThis !== 'undefined' ? globalThis : this);
+</script>
+<script id="nawah-render">
+/* nawah render: checks the data block and the page, then fills headings, figures, citations and charts.
+   Sets <html data-nawah="ok"> and adds <script id="nawah-values">, or sets data-nawah="error" and lists why. */
+(function () {
+  'use strict';
+  const M = window.NawahModel, doc = document, root = doc.documentElement, errors = [];
+  const SECTIONS = ['exec-summary', 'problem-customer', 'solution-value', 'market', 'competition', 'financials',
+    'go-to-market', 'delivery', 'validation', 'risks', 'closing', 'appendix'];
+  const TEXT = {
+    en: {
+      kicker: 'Business report',
+      'exec-summary': 'Executive Summary', 'problem-customer': 'Problem & Customer', 'solution-value': 'Solution & Value',
+      market: 'Market', competition: 'Competition', financials: 'Business Model & Financials', 'go-to-market': 'Go-to-Market',
+      delivery: 'Delivery Plan', validation: 'Validation Plan', risks: 'Risks', appendix: 'Appendix: Assumptions & Sources',
+      closing: { investor: 'The Ask', management: 'Build, Buy or Partner', client: 'Proposal & Next Steps' },
+      audience: { investor: 'Prepared for investors', management: 'Prepared for management', client: 'Prepared for the client' },
+      version: 'Version', confidence: 'Confidence', level: { High: 'High', Medium: 'Medium', Low: 'Low' },
+      reco: { 'Go': 'Recommendation: Go', 'Go with conditions': 'Recommendation: Go, with conditions', 'No-Go': 'Recommendation: No-Go' },
+      kpi: { revenueY3: 'Revenue, year 3 (base case)', breakEven: 'Break-even month (base case)', ltvToCac: 'LTV : CAC', payback: 'CAC payback (months)', duration: 'Time to build (weeks)', buildCost: 'Build cost' },
+      tam: 'TAM', sam: 'SAM', som: 'SOM', us: 'Us', local: 'Local', global: 'Global',
+      scen: { conservative: 'Conservative', base: 'Base', optimistic: 'Optimistic' },
+      likely: 'Likely', upTo: 'Up to', weeks: 'weeks',
+      captions: {
+        funnel: 'Market size: total, serviceable and obtainable (not to scale).',
+        positioning: 'Positioning against local and global competitors.',
+        revenue: 'Monthly revenue by scenario, months 1–36.',
+        gantt: 'Delivery by release, in weeks, one release after another.',
+      },
+      table: { assumption: 'Assumption', value: 'Value', note: 'Basis', source: 'Source' },
+      estimate: 'Estimate', sources: 'Sources', assumptions: 'Assumptions', accessed: 'accessed', rate: 'Exchange rate',
+      assumption: {
+        arpu: 'Average revenue per customer (monthly)', grossMargin: 'Gross margin', churn: 'Monthly churn',
+        cac: 'Customer acquisition cost', newCustomersMonth1: 'New customers, month 1', monthlyGrowth: 'Monthly growth of new customers',
+        fixedMonthlyCost: 'Fixed monthly costs', 'team.monthlyCost': 'Team cost per month', 'team.developers': 'Developers',
+      },
+    },
+    ar: {
+      kicker: 'تقرير أعمال',
+      'exec-summary': 'الملخص التنفيذي', 'problem-customer': 'المشكلة والعميل', 'solution-value': 'الحل والقيمة المقدمة',
+      market: 'السوق', competition: 'المنافسة', financials: 'نموذج العمل والتوقعات المالية', 'go-to-market': 'خطة الدخول إلى السوق',
+      delivery: 'خطة التنفيذ', validation: 'خطة التحقق', risks: 'المخاطر', appendix: 'الملحق: الافتراضات والمصادر',
+      closing: { investor: 'طلب الاستثمار', management: 'البناء أو الشراء أو الشراكة', client: 'العرض والخطوات التالية' },
+      audience: { investor: 'مُعدّ للمستثمرين', management: 'مُعدّ للإدارة', client: 'مُعدّ للعميل' },
+      version: 'الإصدار', confidence: 'درجة الثقة', level: { High: 'عالية', Medium: 'متوسطة', Low: 'منخفضة' },
+      reco: { 'Go': 'التوصية: المضي في التنفيذ', 'Go with conditions': 'التوصية: المضي في التنفيذ بشروط', 'No-Go': 'التوصية: عدم المضي في التنفيذ' },
+      kpi: { revenueY3: 'إيرادات السنة الثالثة (السيناريو الأساسي)', breakEven: 'شهر التعادل (السيناريو الأساسي)', ltvToCac: 'قيمة العميل إلى تكلفة اكتسابه', payback: 'استرداد تكلفة الاكتساب (بالأشهر)', duration: 'مدة التنفيذ (بالأسابيع)', buildCost: 'تكلفة البناء' },
+      tam: 'السوق الكلي', sam: 'السوق القابل للخدمة', som: 'الحصة المستهدفة', us: 'نحن', local: 'محلي', global: 'عالمي',
+      scen: { conservative: 'متحفظ', base: 'أساسي', optimistic: 'متفائل' },
+      likely: 'المرجّح', upTo: 'حتى', weeks: 'أسابيع',
+      captions: {
+        funnel: 'حجم السوق: الكلي والقابل للخدمة والحصة المستهدفة (الرسم ليس بمقياس).',
+        positioning: 'التموضع مقارنة بالمنافسين المحليين والعالميين.',
+        revenue: 'الإيرادات الشهرية لكل سيناريو، من الشهر 1 إلى الشهر 36.',
+        gantt: 'التنفيذ حسب الإصدار بالأسابيع، إصدار تلو الآخر.',
+      },
+      table: { assumption: 'الافتراض', value: 'القيمة', note: 'الأساس', source: 'المصدر' },
+      estimate: 'تقدير', sources: 'المصادر', assumptions: 'الافتراضات', accessed: 'تاريخ الاطلاع', rate: 'سعر الصرف',
+      assumption: {
+        arpu: 'متوسط الإيراد لكل عميل (شهريًا)', grossMargin: 'هامش الربح الإجمالي', churn: 'معدل فقد العملاء الشهري',
+        cac: 'تكلفة اكتساب العميل', newCustomersMonth1: 'العملاء الجدد في الشهر الأول', monthlyGrowth: 'النمو الشهري للعملاء الجدد',
+        fixedMonthlyCost: 'التكاليف الثابتة الشهرية', 'team.monthlyCost': 'تكلفة الفريق الشهرية', 'team.developers': 'عدد المطورين',
+      },
+    },
+  };
+  const COLOR = {
+    conservative: '#b45309', base: '#1f6feb', optimistic: '#0e7a55', local: '#b45309', global: '#5b6475', us: '#0e7a55',
+    grid: '#dfe3ea', plot: '#f5f7fa', low: '#1f6feb', high: '#b7d0fb', tint: ['#dbe8fd', '#b7d0fb', '#8fb5f8'],
+  };
+
+  const $ = (sel) => doc.querySelector(sel);
+  const $$ = (sel) => Array.from(doc.querySelectorAll(sel));
+  const esc = (s) => String(s).replace(/[&<>"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[ch]);
+  const n1 = (v) => Number(v).toFixed(1);
+  const svg = (w, h, body, label) => `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${esc(label)}" xmlns="http://www.w3.org/2000/svg">${body}</svg>`;
+  const text = (x, y, s, anchor = 'start', extra = '') => `<text x="${n1(x)}" y="${n1(y)}" text-anchor="${anchor}"${extra}>${esc(s)}</text>`;
+  const line = (x1, y1, x2, y2) => `<line x1="${n1(x1)}" y1="${n1(y1)}" x2="${n1(x2)}" y2="${n1(y2)}" stroke="${COLOR.grid}"/>`;
+  const rect = (x, y, w, h, fill, rx = 0) => `<rect x="${n1(x)}" y="${n1(y)}" width="${n1(Math.max(0, w))}" height="${n1(h)}" rx="${rx}" fill="${fill}"/>`;
+  const legend = (items, x, y) => items.map(([label, color], i) => rect(x + i * 150, y - 10, 12, 12, color, 2) + text(x + i * 150 + 18, y, label)).join('');
+  const inRange = (v) => typeof v === 'number' && v >= 0 && v <= 10;
+  const isUrl = (u) => /^https?:\/\/\S+$/.test(u || '');
+
+  function validate(d) {
+    const m = d.meta || {}, sourceIds = new Set();
+    if (!['en', 'ar'].includes(m.lang)) errors.push('meta.lang must be "en" or "ar"');
+    if (!['investor', 'management', 'client'].includes(m.audience)) errors.push('meta.audience must be investor, management or client');
+    if (!['Go', 'Go with conditions', 'No-Go'].includes(m.recommendation)) errors.push('meta.recommendation must be "Go", "Go with conditions" or "No-Go"');
+    for (const k of ['title', 'oneLiner', 'date', 'preparedBy']) if (!m[k]) errors.push(`meta.${k} is missing`);
+    if (!Number.isInteger(m.version) || m.version < 1) errors.push('meta.version must be a whole number from 1');
+    (d.sources || []).forEach((s, i) => {
+      if (!Number.isInteger(s.id) || !s.title || !isUrl(s.url) || !s.accessed) errors.push(`sources[${i}] needs id (a number), title, url (http…) and accessed`);
+      else sourceIds.add(s.id);
+    });
+    const cites = (id, where) => { if (!sourceIds.has(id)) errors.push(`${where} cites [${id}], which is not in sources`); };
+    ((d.market && d.market.sources) || []).forEach((id) => cites(id, 'market.sources'));
+    (d.assumptionNotes || []).forEach((a, i) => { if (a.source != null) cites(a.source, `assumptionNotes[${i}]`); });
+    if (m.currency && m.currency !== 'USD' && m.usdRateSource != null) cites(m.usdRateSource, 'meta.usdRateSource');
+    if (!(d.competitors || []).length) errors.push('competitors must list at least one competitor or substitute');
+    (d.competitors || []).forEach((k, i) => {
+      if (!k.name || !isUrl(k.url)) errors.push(`competitors[${i}] needs a name and a link (http…)`);
+      if (!['local', 'global'].includes(k.scope)) errors.push(`competitors[${i}].scope must be local or global`);
+      if (!inRange(k.x) || !inRange(k.y)) errors.push(`competitors[${i}] needs x and y between 0 and 10`);
+    });
+    const p = d.positioning || {};
+    if (!p.x || !p.y || !p.us || !inRange(p.us.x) || !inRange(p.us.y)) errors.push('positioning needs x and y axis labels and us {x, y} between 0 and 10');
+    return sourceIds;
+  }
+
+  function cover(T, m) {
+    $('#cover-kicker').textContent = T.kicker;
+    $('#cover-title').textContent = m.title;
+    $('#cover-oneliner').textContent = m.oneLiner;
+    $('#cover-meta').innerHTML = [T.audience[m.audience], m.date, `${T.version} ${m.version}`, m.preparedBy]
+      .map((x) => `<span>${esc(x)}</span>`).join('');
+    const r = $('[data-reco]');
+    if (r) { r.textContent = T.reco[m.recommendation]; r.setAttribute('data-v', m.recommendation); }
+    doc.title = m.title;
+  }
+
+  function sections(T, audience) {
+    for (const id of SECTIONS) {
+      const sec = doc.getElementById(id);
+      if (!sec) { errors.push(`section "${id}" is missing from the page`); continue; }
+      const h = sec.querySelector('h2 [data-t]');
+      if (h) h.textContent = id === 'closing' ? T.closing[audience] : T[id];
+      const c = sec.querySelector('.confidence');
+      const level = c && c.getAttribute('data-level');
+      if (!c || !T.level[level]) errors.push(`section "${id}" needs its confidence set: data-level="High", "Medium" or "Low"`);
+      else c.textContent = `${T.confidence}: ${T.level[level]}`;
+    }
+    const walker = doc.createTreeWalker(doc.body, NodeFilter.SHOW_COMMENT);
+    for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+      const s = n.nodeValue.match(/^\s*SLOT ([a-z-]+)\s*$/);
+      if (s) errors.push(`section "${s[1]}" has no content yet (its SLOT marker is still there)`);
+    }
+  }
+
+  function bind(values) {
+    for (const el of $$('[data-k]')) {
+      const k = el.getAttribute('data-k');
+      if (k in values) el.textContent = values[k];
+      else errors.push(`unknown figure data-k="${k}"`);
+    }
+  }
+
+  function cite(sourceIds) {
+    for (const el of $$('[data-src]')) {
+      const ids = el.getAttribute('data-src').split(',').map((x) => Number(x.trim()));
+      if (ids.some((id) => !sourceIds.has(id))) errors.push(`citation data-src="${el.getAttribute('data-src')}" names a source that is not in sources`);
+      else el.innerHTML = ids.map((id) => `<a href="#src-${id}">[${id}]</a>`).join('');
+    }
+  }
+
+  function kpis(T, v) {
+    return [[v['base.revenueY3'], T.kpi.revenueY3], [v['base.breakEvenMonth'], T.kpi.breakEven], [v.ltvToCac, T.kpi.ltvToCac],
+      [v.paybackMonths, T.kpi.payback], [v.durationWeeks, T.kpi.duration], [v.buildCost, T.kpi.buildCost]]
+      .map(([val, label]) => `<div class="kpi"><div class="v">${esc(val)}</div><div class="l">${esc(label)}</div></div>`).join('');
+  }
+
+  function funnel(T, v) {
+    const W = 600, H = 46, G = 8, rows = [['tam', 1], ['sam', 0.74], ['som', 0.48]];
+    const body = rows.map(([k, f], i) => {
+      const w = W * f, x = (W - w) / 2, y = i * (H + G);
+      return rect(x, y, w, H, COLOR.tint[i], 8) + text(W / 2, y + H / 2 + 5, `${T[k]} · ${v[k]}`, 'middle', ' font-weight="600"');
+    }).join('');
+    return svg(W, rows.length * (H + G) - G, body, T.captions.funnel);
+  }
+
+  function positioning(T, d) {
+    const W = 600, H = 420, P = 44;
+    const sx = (x) => P + x / 10 * (W - 2 * P), sy = (y) => H - P - y / 10 * (H - 2 * P);
+    // Labels of dots near the right edge go on the dot's left so they stay inside the chart.
+    const dot = (x, y, color, label, r) => `<circle cx="${n1(sx(x))}" cy="${n1(sy(y))}" r="${r}" fill="${color}"/>`
+      + (sx(x) > W - 170 ? text(sx(x) - r - 4, sy(y) + 4, label, 'end') : text(sx(x) + r + 4, sy(y) + 4, label));
+    let b = rect(P, P, W - 2 * P, H - 2 * P, COLOR.plot) + line(sx(5), P, sx(5), H - P) + line(P, sy(5), W - P, sy(5));
+    b += text(W / 2, H - 12, d.positioning.x, 'middle');
+    b += `<text transform="translate(16 ${H / 2}) rotate(-90)" text-anchor="middle">${esc(d.positioning.y)}</text>`;
+    for (const k of d.competitors) b += dot(k.x, k.y, COLOR[k.scope], k.name, 5);
+    b += dot(d.positioning.us.x, d.positioning.us.y, COLOR.us, T.us, 8);
+    b += legend([[T.local, COLOR.local], [T.global, COLOR.global], [T.us, COLOR.us]], P, 24);
+    return svg(W, H, b, T.captions.positioning);
+  }
+
+  function revenue(T, d, c) {
+    const W = 600, H = 300, L = 64, R = 12, TOP = 34, B = 30, F = M.formatters(d.meta);
+    const n = c.scenarios.base.months.length;
+    const max = Math.max(1, ...M.SCENARIOS.flatMap((s) => c.scenarios[s].months.map((m) => m.revenue)));
+    const x = (m) => L + (m - 1) / (n - 1) * (W - L - R), y = (v) => TOP + (1 - v / max) * (H - TOP - B);
+    let b = '';
+    for (const f of [0, 0.5, 1]) b += line(L, y(max * f), W - R, y(max * f)) + text(L - 6, y(max * f) + 4, F.compact(max * f), 'end');
+    for (const m of [1, 12, 24, 36].filter((m) => m <= n)) b += text(x(m), H - 10, String(m), 'middle');
+    for (const s of M.SCENARIOS) {
+      const pts = c.scenarios[s].months.map((m) => `${n1(x(m.month))},${n1(y(m.revenue))}`).join(' ');
+      b += `<polyline fill="none" stroke-width="2.5" stroke="${COLOR[s]}" points="${pts}"/>`;
+    }
+    b += legend(M.SCENARIOS.map((s) => [T.scen[s], COLOR[s]]), L, 16);
+    return svg(W, H, b, T.captions.revenue);
+  }
+
+  function gantt(T, c) {
+    const rel = M.RELEASES.filter((r) => c.duration.byRelease[r]);
+    const W = 600, L = 56, R = 110, ROW = 34, TOP = 30, H = TOP + rel.length * ROW + 22;
+    const total = Math.max(1, c.duration.weeksHigh), x = (w) => L + w / total * (W - L - R);
+    let b = '';
+    for (const w of [0, Math.round(total / 2), total]) b += line(x(w), TOP - 6, x(w), H - 22) + text(x(w), H - 6, String(w), 'middle');
+    let start = 0;
+    rel.forEach((r, i) => {
+      const d = c.duration.byRelease[r], y = TOP + i * ROW;
+      b += text(L - 8, y + 15, r, 'end');
+      b += rect(x(start), y, x(start + d.weeksLow) - x(start), 20, COLOR.low, 3);
+      b += rect(x(start + d.weeksLow), y, x(start + d.weeksHigh) - x(start + d.weeksLow), 20, COLOR.high, 3);
+      b += text(x(start + d.weeksHigh) + 6, y + 15, `${d.weeksLow}–${d.weeksHigh} ${T.weeks}`);
+      start += d.weeksHigh;
+    });
+    b += legend([[T.likely, COLOR.low], [T.upTo, COLOR.high]], L, 14);
+    return svg(W, H, b, T.captions.gantt);
+  }
+
+  function chart(name, html, caption) {
+    const el = $(`[data-chart="${name}"]`);
+    if (!el) { errors.push(`chart "${name}" is missing from the page`); return; }
+    el.innerHTML = html + (caption ? `<figcaption>${esc(caption)}</figcaption>` : '');
+  }
+
+  function appendix(T, d) {
+    const F = M.formatters(d.meta), base = Object.assign({}, d.assumptions, d.scenarios.base);
+    const fmt = { arpu: F.money, cac: F.money, fixedMonthlyCost: F.money, grossMargin: F.pct, churn: F.pct, monthlyGrowth: F.pct, newCustomersMonth1: F.int };
+    const valueOf = (a) => (a.key in fmt ? fmt[a.key](base[a.key])
+      : a.key === 'team.monthlyCost' ? F.money(d.team.monthlyCost)
+      : a.key === 'team.developers' ? F.int(d.team.developers)
+      : (a.value == null ? '' : a.value));
+    const src = (id) => (id == null ? esc(T.estimate) : `<a href="#src-${id}">[${id}]</a>`);
+    let rows = (d.assumptionNotes || []).map((a) =>
+      `<tr><td>${esc(T.assumption[a.key] || a.label || a.key)}</td><td>${esc(valueOf(a))}</td><td>${esc(a.note || '')}</td><td>${src(a.source)}</td></tr>`).join('');
+    if (d.meta.currency !== 'USD') {
+      rows += `<tr><td>${esc(T.rate)}</td><td>1 USD = ${esc(F.dec2(1 / d.meta.usdRate))} ${esc(d.meta.currency)}</td><td></td><td>${src(d.meta.usdRateSource)}</td></tr>`;
+    }
+    $('#appendix-assumptions-h').textContent = T.assumptions;
+    $('#assumptions-table').innerHTML = `<thead><tr><th>${esc(T.table.assumption)}</th><th>${esc(T.table.value)}</th><th>${esc(T.table.note)}</th><th>${esc(T.table.source)}</th></tr></thead><tbody>${rows}</tbody>`;
+    $('#appendix-sources-h').textContent = T.sources;
+    $('#sources-list').innerHTML = (d.sources || []).map((s) =>
+      `<li id="src-${s.id}">[${s.id}] ${esc(s.title)}. <a href="${esc(s.url)}">${esc(s.url)}</a> (${esc(T.accessed)} ${esc(s.accessed)})</li>`).join('');
+  }
+
+  function fail() {
+    root.setAttribute('data-nawah', 'error');
+    $('#nawah-error').textContent = 'Report error. Fix the data block or the page, then check again:\n- ' + errors.join('\n- ');
+  }
+
+  try {
+    let d;
+    try { d = JSON.parse($('#nawah-data').textContent); } catch (e) { errors.push('the data block is not valid JSON: ' + e.message); throw null; }
+    const sourceIds = validate(d);
+    if (errors.length) throw null;
+    const T = TEXT[d.meta.lang];
+    root.lang = d.meta.lang;
+    root.dir = d.meta.lang === 'ar' ? 'rtl' : 'ltr';
+    const c = M.computeAll(d);
+    cover(T, d.meta);
+    sections(T, d.meta.audience);
+    bind(c.values);
+    cite(sourceIds);
+    chart('kpis', kpis(T, c.values));
+    chart('funnel', funnel(T, c.values), T.captions.funnel);
+    chart('positioning', positioning(T, d), T.captions.positioning);
+    chart('revenue', revenue(T, d, c), `${T.captions.revenue} (${d.meta.currency})`);
+    chart('gantt', gantt(T, c), T.captions.gantt);
+    appendix(T, d);
+    if (errors.length) throw null;
+    const out = doc.createElement('script');
+    out.type = 'application/json';
+    out.id = 'nawah-values';
+    out.textContent = JSON.stringify({ lang: d.meta.lang, dir: root.dir, version: d.meta.version, values: c.values, drift: c.drift });
+    doc.body.appendChild(out);
+    root.setAttribute('data-nawah', 'ok');
+  } catch (e) {
+    if (e) errors.push(e.message);
+    fail();
+  }
+})();
 </script>
 </body>
 </html>
