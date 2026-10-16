@@ -42,6 +42,10 @@ sections that depend on it Low confidence.
 - Conflicting figures for the same thing: list them side by side under Conflicts with their
   sources, and say which one the report uses and why.
 - Competitors from both competitor topics go in one table.
+- Findings from the two competitor topics go under Competitor findings.
+- Each competitor's URL and each sentiment link becomes a source in the Sources table (title
+  `<name>: product page` or `<name>: reviews`, accessed from the row); the competitor's Source cell
+  lists those ids.
 
 ## research.md format
 
@@ -62,8 +66,12 @@ Date: <YYYY-MM-DD>    Target market: <…>
 |---|---|---|---|
 
 ## Competitors
-| Name | URL | Scope | Offer | Price | Strengths | Weaknesses | Sentiment | Source |
-|---|---|---|---|---|---|---|---|---|
+| Name | URL | Scope | Offer | Price | Target customer | Strengths | Weaknesses | Sentiment | Source |
+|---|---|---|---|---|---|---|---|---|---|
+
+## Competitor findings
+| Claim | Value | Source | Confidence |
+|---|---|---|---|
 
 ## Conflicts
 ## Gaps
