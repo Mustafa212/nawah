@@ -44,7 +44,7 @@ Next: none
 Last updated: 2026-09-05T16:20Z
 EOF
 # The prompt goes right after -p: --allowedTools and --add-dir take several values and would swallow it.
-out="$(cd "$base" && NAWAH_HOME="$H" claude -p "/nawah:nawah status" --plugin-dir "$P" --add-dir "$H" \
+out="$(cd "$base" && NAWAH_HOME="$H" claude -p "/nawah:nawah status" --setting-sources project,local --plugin-dir "$P" --add-dir "$H" \
   --allowedTools "Read" "Glob" "Grep" "Bash(printenv *)" "Bash(ls *)" 2>&1)"
 printf '%s\n' "$out" > "$H/out.txt"
 failures=0

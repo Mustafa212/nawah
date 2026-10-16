@@ -26,7 +26,7 @@ Stale: none
 Next: Write the report
 Last updated: 2026-10-16T12:00Z
 EOF
-(cd "$base" && NAWAH_HOME="$H" NAWAH_NO_OPEN=1 claude -p "/nawah:nawah resume qahwa-points" --plugin-dir "$P" --add-dir "$H" \
+(cd "$base" && NAWAH_HOME="$H" NAWAH_NO_OPEN=1 claude -p "/nawah:nawah resume qahwa-points" --setting-sources project,local --plugin-dir "$P" --add-dir "$H" \
   --allowedTools "Read" "Write" "Edit" "Glob" "Grep" "Bash(bash *)" "Bash(cp *)" "Bash(printenv *)" "Bash(ls *)") > "$H/out.txt" 2>&1
 r="$P/scripts/report.sh"
 failures=0
