@@ -85,7 +85,9 @@ check "tracker ids are unique" '[ "$(grep -o "^## FILE-[0-9]*" "$T" | sort | uni
 check "every item is logged once" '[ "$(grep -cE "^\| (E|F|S)[0-9]" "$I/push-log.md")" -eq "$items" ] && [ "$(grep -oE "^\| (E|F|S)[0-9.]+ " "$I/push-log.md" | sort | uniq -d | wc -l)" -eq 0 ]'
 check "the first two items kept their ids" 'grep -qE "^\| E1 \| FILE-1 \|" "$I/push-log.md" && grep -qE "^\| F1.1 \| FILE-2 \|" "$I/push-log.md"'
 check "nothing is pending" '! grep -E "^\| (E|F|S)[0-9]" "$I/push-log.md" | grep -qvE "\| none \|$"'
-check "a dependency was linked" 'grep -A7 "Sign up a shop\|Print the shop" "$T" | grep -q "^Depends on: FILE-"'
+check "every dependency was linked" '[ "$(grep -c "^Depends on: FILE-" "$T")" -eq "$(grep -c "^Depends on: S" "$I/backlog.md")" ]'
+check "features and stories have a parent" '! grep -A1 -E "^## FILE-[0-9]+ — (Feature|Story):" "$T" | grep -E "^Parent:" | grep -qv "^Parent: FILE-"'
+check "the first two items are kept once" '[ "$(grep -c "^## FILE-1 — Epic: Shop onboarding and stamping$" "$T")" -eq 1 ] && [ "$(grep -c "^## FILE-2 — Feature: Shop sign-up$" "$T")" -eq 1 ]'
 check "the idea is done" 'grep -q "^Step: done" "$I/state.md"'
 run out2.txt
 check "a second resume creates nothing" '[ "$(grep -c "^## FILE-" "$T")" -eq "$items" ]'

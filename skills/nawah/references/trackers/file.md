@@ -16,7 +16,7 @@ Points: <n | ->
 Tags: nawah, nawah:<slug>
 Depends on: <FILE-n, … | none>
 Body:
-<the item's lines from backlog.md, from the line after its heading to the line before the next heading>
+<the item's lines from backlog.md, from the line after its heading to the line before the next heading, without the Parent, Release, Priority, Points and Depends on lines>
 ```
 
 Items are appended, never rewritten, except the `Depends on:` line by `link`. Numbers continue from the
@@ -30,5 +30,5 @@ highest `FILE-<n>` in the file.
 | detect | Nothing to detect. Write `Detected: file` in the project file. |
 | read_backlog | Every `## FILE-<n> — <type>: <title>` heading with its `Parent:` line. |
 | create | Append one item in the format above (a heredoc, `cat >> "<file>" <<'EOF'`, or the Edit tool at the end of the file). Its id is `FILE-<n>`; its URL is `<path>#FILE-<n>`. The parent is written at create. |
-| link | Dependencies: replace the item's `Depends on:` line with the tracker ids. |
+| link | Dependencies: replace the `Depends on:` line in the item's header (the line above `Body:`) with the tracker ids. |
 | csv_format | The generic CSV (`references/backlog.md`). |

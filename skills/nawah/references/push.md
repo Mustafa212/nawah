@@ -16,8 +16,8 @@ Contents: Before the first call · Order · Fields · push-log.md · Reruns and 
    none`, and create its features under that item.
 3. Create each item with its parent link in the same call when the tracker allows it (see the
    adapter); otherwise `link` right after.
-4. Write the item's push-log row as soon as the call returns, before the next item.
-5. When every item exists: dependency links with `link`, then set their rows' `Pending` to `none`.
+4. Write the item's push-log row as soon as the call returns, before the next item, with `Pending`: `deps` when its backlog `Depends on:` isn't `none`; else `parent` when the parent link wasn't made in the create call; else `none`.
+5. When every item exists: for each row whose `Pending` is `deps` (or `parent`), make the missing links with `link`, then set that row's `Pending` to `none`.
 
 ## Fields
 What goes where is in the adapter. From `backlog.md`:
@@ -42,6 +42,7 @@ Target: <tracker> <url> <tracker project>
 
 - `Hash`: `bash "${CLAUDE_PLUGIN_ROOT}/scripts/item-hash.sh" "<backlog.md>" <local id>`, at create
   time.
+- `push-log.md` lives in `ideas/<slug>/`. On the first push create it with its title, the `Target:` line and the table header. `Created at`: `date -u +%Y-%m-%dT%H:%MZ`.
 - `Pending`: `parent` (the parent link failed), `deps` (dependency links not done yet), or `none`.
 
 ## Reruns and resume
