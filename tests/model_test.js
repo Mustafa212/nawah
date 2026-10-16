@@ -131,5 +131,23 @@ t('computeAll: every value is text without NaN, undefined or Infinity', () => {
 t('computeAll: a missing part fails clearly', () => assert.throws(() => M.computeAll({ meta: data.meta }), /data block needs "market"/));
 t('computeAll: market sizes must narrow', () => assert.throws(() => M.computeAll({ ...data, market: { tam: 1, sam: 2, som: 1 } }), /tam >= sam >= som/));
 
+t('every binding report.md documents exists', () => {
+  const ref = fs.readFileSync(path.join(__dirname, '../skills/nawah/references/report.md'), 'utf8');
+  const table = (ref.split(/^## Bindings\s*$/m)[1] || '').split(/^## /m)[0];
+  const keys = [];
+  for (const line of table.split('\n')) {
+    const cell = (line.match(/^\| ([^|]+) \|/) || [])[1];
+    if (!cell || /^Key|^-/.test(cell)) continue;
+    for (const k of cell.match(/`([^`]+)`/g) || []) keys.push(k.slice(1, -1));
+  }
+  assert.ok(keys.length >= 10, 'found only ' + keys.length + ' keys under "## Bindings"');
+  const expand = (k) => k.includes('<s>') ? ['conservative', 'base', 'optimistic'].flatMap((s) => expand(k.replace('<s>', s)))
+    : k.includes('<n>') ? [1, 2, 3].flatMap((n) => expand(k.replace('<n>', n)))
+    : k.includes('<r>') ? ['MVP', 'v1'].flatMap((r) => expand(k.replace('<r>', r)))
+    : [k];
+  const v = M.computeAll({ ...data, meta: { ...data.meta, currency: 'EGP', usdRate: 0.02 }, backlog: { pointsByRelease: { MVP: 80, v1: 40 } } }).values;
+  for (const k of keys.flatMap(expand)) assert.ok(k in v, `report.md documents "${k}", which the model doesn't produce`);
+});
+
 console.log(failures ? `${failures} test(s) failed` : 'all model tests pass');
 process.exit(failures ? 1 : 0);
