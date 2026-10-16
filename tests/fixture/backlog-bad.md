@@ -65,6 +65,21 @@ Out of scope: none
 NFR: none
 Open questions: none
 
+#### S1.2.1 — Stamp a visit again
+Story: As a customer, I want to scan the code again, so that my second visit counts.
+Value: Repeat visits.
+Priority: Should
+Release: MVP
+Points: 2
+Depends on: none
+Acceptance criteria:
+1. Given a scan 5 hours ago When the customer scans Then a second stamp is added
+2. Given 2 stamps today When the customer scans again Then no stamp is added
+3. Given a closed shop When the customer scans Then "shop closed" shows
+Out of scope: none
+NFR: none
+Open questions: none
+
 ## E2 — Rewards
 Goal: Rewards.
 Success metric: 20 % redeem.

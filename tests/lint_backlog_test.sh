@@ -11,6 +11,7 @@ S1.1.2: Points must be 1, 2, 3, 5 or 8
 S1.1.2: AC 1 is not "Given … When … Then …"
 S1.2.1: depends on unknown S9.9.9
 S1.2.1: MVP story depends on v2 story S2.1.1
+S1.2.1: duplicate id
 S2.1.2: missing "NFR:"
 S2.1.2: MVP story depends on v2 story S2.1.1
 S2.1.2: Story must read "As a <role>, I want <capability>, so that <benefit>"

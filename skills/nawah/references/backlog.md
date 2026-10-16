@@ -59,7 +59,8 @@ Headings use an em dash (`—`). Ids are numbered in order: `F2.3` is the third 
 ## Writing stories
 - **Title:** what the user does ("Sign up with a phone number"), not a component ("OTP API").
 - **Story:** a specific role from the brief; never "a user" alone. Always open with "As a" or "As an"
-  ("As a counter staff member", not "As counter staff"): the lint rejects anything else.
+  ("As a counter staff member", not "As counter staff"): the format requires it, and the reviewer
+  checks it (R8).
 - **Value:** why it matters, tied to the brief's problem or a report figure.
 - **Acceptance criteria:** numbered, each `Given … When … Then …` on one line, with an observable
   outcome (a message, a state, a number, a time limit) and concrete values ("within 60 seconds", "3

@@ -26,7 +26,8 @@ check every epic, feature and story against these rules:
   features'.
 - **R8 Format:** every label is present (epic: Goal, Success metric, Release, Parent; feature:
   Description, Release; story: Story, Value, Priority, Release, Points, Depends on, Acceptance
-  criteria, Out of scope, NFR, Open questions); ids `E<n>`, `F<n>.<n>`, `S<n>.<n>.<n>` nest correctly.
+  criteria, Out of scope, NFR, Open questions); ids `E<n>`, `F<n>.<n>`, `S<n>.<n>.<n>` nest correctly
+  and are unique; every Story opens with "As a" or "As an".
 - **R9 Role and wording:** "As a user" without a specific role; a title that names a component
   instead of what the user does.
 - **R10 Gaps:** behaviour the brief clearly needs that no story covers: error states, permissions,

@@ -1,5 +1,5 @@
 // Structural lint of a nawah backlog.md: ids and nesting, labels, story wording, acceptance criteria,
-// points, priorities, releases, dependencies (unknown, cycles, later releases) and traceability.
+// duplicate ids, points, priorities, releases, dependencies (unknown, cycles, later releases) and traceability.
 // Usage: node tests/lint_backlog.js <backlog.md>   prints one problem per line; exit 1 when there are any.
 const fs = require('fs');
 
@@ -48,7 +48,8 @@ function lint(text) {
     if (f) { cur.fields[f[1]] = f[2].trim(); if (f[1] === 'Acceptance criteria') cur.inAc = true; }
   }
 
-  const byId = new Map(items.map((i) => [i.id, i]));
+  const byId = new Map();
+  for (const it of items) { if (byId.has(it.id)) problems.push(`${it.id}: duplicate id`); else byId.set(it.id, it); }
   for (const it of items) {
     for (const l of LABELS[it.type]) if (!(l in it.fields)) problems.push(`${it.id}: missing "${l}:"`);
     if ('Release' in it.fields && !RELEASES.includes(it.fields.Release)) problems.push(`${it.id}: Release must be MVP, v1 or v2`);
