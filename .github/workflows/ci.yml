@@ -29,3 +29,19 @@ jobs:
           node-version: 22
       - name: report model figures
         run: node tests/model_test.js
+  render:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # On Windows this runs in Git Bash with Edge, as Claude's Bash tool does; on Ubuntu with Chrome.
+      - name: report.sh
+        shell: bash
+        env:
+          NAWAH_BROWSER_FLAGS: ${{ runner.os == 'Linux' && '--no-sandbox' || '' }}
+        run: bash tests/report_sh_test.sh
