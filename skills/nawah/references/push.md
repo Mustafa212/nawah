@@ -4,20 +4,28 @@ Contents: Before the first call · Order · Fields · push-log.md · Reruns and 
 
 ## Before the first call
 - Gate 3 was approved in this conversation, or on resume `state.md` shows the backlog approved and
-  `push-log.md`'s `Target:` is the project's current tracker target (see `references/status.md`).
+  `push-log.md`'s `Target:` and `Approved:` lines still hold (see `references/status.md`).
 - Read the project file and `references/trackers/<Tracker>.md`. Run its `connect`; on failure show
   the error and the fix, offer the CSV instead, and stop with `Next:` saying what to fix.
-- Read `push-log.md` if it exists.
+- At a Gate 3 yes, write `push-log.md`'s header (below) before the first call; otherwise read it.
 - Request bodies go in `ideas/<slug>/.push/` (create it); never a token in them.
 
 ## Order
 1. Epics, in id order; then features; then stories.
 2. An epic with `Parent: existing <tracker id>` isn't created: log it with that tracker id and `Pending:
    none`, and create its features under that item.
-3. Create each item with its parent link in the same call when the tracker allows it (see the
-   adapter); otherwise `link` right after.
-4. Write the item's push-log row as soon as the call returns, before the next item, with `Pending`: `deps` when its backlog `Depends on:` isn't `none`; else `parent` when the parent link wasn't made in the create call; else `none`.
-5. When every item exists: for each row whose `Pending` is `deps` (or `parent`), make the missing links with `link`, then set that row's `Pending` to `none`.
+3. A feature the tracker keeps as a label or tag (Jira without a level above Epic, Azure DevOps
+   Basic; see `Detected:` and the adapter) isn't created: log it with Tracker id `label:<label>`
+   (Jira, for example `label:feature-shop-sign-up`) or `tag:<tag>` (Azure DevOps), URL `-`, `Pending:
+   none`. Its stories take the epic as parent and carry that label or tag.
+4. Create each item with its parent link in the same call when the tracker allows it (see the
+   adapter). Write its push-log row as soon as the call returns, before the next call, with `Pending`
+   listing the links it still lacks: `parent` when the create call didn't link its parent, `deps` when
+   its backlog `Depends on:` isn't `none`, `parent, deps` for both, else `none`.
+5. A parent the create call didn't link: `link` it right away; as soon as that succeeds, remove
+   `parent` from the row's `Pending`.
+6. When every item exists: first every `parent` still pending, then every `deps`, with `link`. After
+   each link succeeds, remove that value from the row's `Pending` (nothing left: `none`).
 
 ## Fields
 What goes where is in the adapter. From `backlog.md`:
@@ -34,20 +42,24 @@ What goes where is in the adapter. From `backlog.md`:
 ```
 # Push log — <slug>
 Target: <tracker> <url> <tracker project>
+Approved: <e> epics, <f> features, <s> stories, <YYYY-MM-DD>
 
 | Local id | Tracker id | URL | Created at | Hash | Pending |
 |---|---|---|---|---|---|
 | E1 | 1234 | https://… | 2026-10-16T19:40Z | 3355210114 | none |
 ```
 
+- `push-log.md` lives in `ideas/<slug>/`. At each Gate 3 yes, before the first call, write its title,
+  the `Target:` line, the `Approved:` line (the counts shown at Gate 3, today's date) and the table
+  header; when it already exists, update `Approved:` and keep the rows.
 - `Hash`: `bash "${CLAUDE_PLUGIN_ROOT}/scripts/item-hash.sh" "<backlog.md>" <local id>`, at create
-  time.
-- `push-log.md` lives in `ideas/<slug>/`. On the first push create it with its title, the `Target:` line and the table header. `Created at`: `date -u +%Y-%m-%dT%H:%MZ`.
-- `Pending`: `parent` (the parent link failed), `deps` (dependency links not done yet), or `none`.
+  time. `Created at`: `date -u +%Y-%m-%dT%H:%MZ`.
+- `Pending`: the links still missing, as a list: `parent`, `deps`, `parent, deps`, or `none`.
 
 ## Reruns and resume
 - A local id already in the log is never created again.
-- A row whose `Pending` isn't `none`: do only what's pending.
+- A row whose `Pending` isn't `none`: make each link it lists, as in step 6 of Order (`parent`
+  before `deps`).
 - A row whose hash no longer matches `item-hash.sh` now: list it as changed, with what changed, so
   the user can update it in the tracker; nawah doesn't edit pushed items.
 - Nothing missing and nothing pending: start the reply with the words "Nothing to push", then the counts.

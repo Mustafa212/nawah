@@ -124,8 +124,13 @@ Show, in this order:
 3. Open review findings and stories with open questions.
 4. The report update: version <n>, what changed.
 5. The exact target: "<e> epics, <f> features, <s> stories → <tracker> `<url>` / `<project>`, tags
-   `nawah`, `nawah:<slug>`", or "No tracker: the backlog and `backlog.csv` only."
+   <the tags or labels every item gets: `nawah`, `nawah:<slug>`; Jira `nawah`, `nawah-<slug>`>".
+   When the tracker keeps features as labels (Jira without a level above Epic) or tags (Azure DevOps
+   Basic), say "<f> features as labels" (or "as tags"): they aren't created. GitHub: also the labels
+   and milestones the push will create because they don't exist yet. No tracker: "No tracker: the
+   backlog and `backlog.csv` only."
 6. Ask: "Approve the backlog, report version <n> and this push?"
 
 On yes: render `report-v<n>.pdf` (as at Gate 2), `Gates: … backlog <date>`, `Step: 7` (or `done` when
-there's no tracker), then `references/push.md`.
+there's no tracker); with a tracker, write `push-log.md`'s header with its `Approved:` line
+(`references/push.md`) before the first call, then push.

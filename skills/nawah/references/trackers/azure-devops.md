@@ -45,8 +45,8 @@ Contents: Transport · Operations · Create body · CSV
   `<h3>Acceptance criteria</h3>`); points and priority for epics and features; the area path when
   there's no default; the relation for items without a parent.
 - Priority: Must 1, Should 2, Could 3.
-- Basic process (no Feature type): a story's parent is its epic, and its feature becomes the tag
-  `feature:<feature title>`.
+- Basic process (no Feature type): a feature isn't created (`references/push.md`); a story's parent
+  is its epic, and its feature becomes the tag `feature:<feature title>`.
 - Description HTML: `<p><b>Story:</b> …</p><p><b>Value:</b> …</p><p><b>Out of scope:</b> …</p><p><b>NFR:</b> …</p><p><b>Open questions:</b> …</p>`;
   an epic: Goal and Success metric; a feature: Description. Escape `&`, `<` and `>` in the text.
 

@@ -42,6 +42,8 @@ Contents: Transport · Operations · Create body · CSV
 
 - Leave out what `Detected` doesn't support (points, fixVersions or the release label, the feature
   label) and `parent` for top-level items.
+- Features as labels (no level above Epic): a feature isn't created (`references/push.md`); its
+  stories take the epic as `parent` and carry the label `feature-<feature-slug>`.
 - Labels have no spaces; slugs are kebab-case.
 - Priority isn't set (schemes differ); it's the label `priority-must`, `-should` or `-could`.
 - Description in Atlassian Document Format: one paragraph per field,

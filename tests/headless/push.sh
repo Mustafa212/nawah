@@ -45,6 +45,7 @@ EOF
 cat > "$I/push-log.md" <<EOF
 # Push log — qahwa-points
 Target: file $T demo
+Approved: 2 epics, 4 features, 5 stories, 2026-10-16
 
 | Local id | Tracker id | URL | Created at | Hash | Pending |
 |---|---|---|---|---|---|
@@ -71,9 +72,7 @@ Next: /nawah resume qahwa-points continues the push
 Last updated: 2026-10-16T19:41Z
 EOF
 run() {
-  (cd "$base" && NAWAH_HOME="$H" NAWAH_NO_OPEN=1 claude -p "/nawah:nawah resume qahwa-points
-
-Yes, continue the push of the remaining items to the file tracker." --setting-sources project,local --plugin-dir "$P" --add-dir "$H" \
+  (cd "$base" && NAWAH_HOME="$H" NAWAH_NO_OPEN=1 claude -p "/nawah:nawah resume qahwa-points" --setting-sources project,local --plugin-dir "$P" --add-dir "$H" \
     --allowedTools "Read" "Write" "Edit" "Glob" "Grep" "Bash(bash *)" "Bash(cat *)" "Bash(mkdir *)" "Bash(printenv *)" "Bash(ls *)" "Bash(date *)") > "$H/$1" 2>&1
 }
 items="$(grep -cE '^#{2,4} [EFS][0-9]' "$I/backlog.md")"
