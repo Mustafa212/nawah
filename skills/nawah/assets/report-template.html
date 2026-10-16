@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head><meta charset="utf-8"><title>nawah report</title></head>
+<body>
+<script id="nawah-model">
+/* nawah model: pure functions, no DOM. Tested by tests/model_test.js. */
+(function (root) {
+  'use strict';
+  const SIZES = { S: [1, 2], M: [2, 4], L: [4, 8] }; // ideal developer-weeks
+  const FOCUS = [0.8, 0.6];                          // share of time on the work: [optimistic, pessimistic]
+  const OVERHEAD = [1.15, 1.25];                     // design, QA hardening and release
+  const VELOCITY_PER_DEV = [12, 16];                 // points per developer per two-week sprint (assumption)
+  const WEEKS_PER_MONTH = 52 / 12;
+  const RELEASES = ['MVP', 'v1', 'v2'];
+  const SCENARIOS = ['conservative', 'base', 'optimistic'];
+  const EPS = 1e-9;
+  const TEXT = {
+    en: { na: '—', noBreakEven: 'Not within 36 months' },
+    ar: { na: '—', noBreakEven: 'لا يتحقق خلال 36 شهرًا' },
+  };
+
+  function num(v, name) {
+    if (typeof v !== 'number' || !Number.isFinite(v)) throw new Error(name + ' must be a number');
+    return v;
+  }
+  const up = (x) => Math.ceil(x - EPS);
+  const sum = (rows, k) => rows.reduce((s, r) => s + r[k], 0);
+
+  function unitEconomics(a) {
+    const arpu = num(a.arpu, 'arpu'), gm = num(a.grossMargin, 'grossMargin');
+    const churn = num(a.churn, 'churn'), cac = num(a.cac, 'cac');
+    if (arpu <= 0) throw new Error('arpu must be above 0');
+    if (gm <= 0 || gm > 1) throw new Error('grossMargin must be above 0 and at most 1');
+    if (churn < 0 || churn >= 1) throw new Error('churn must be at least 0 and below 1');
+    if (cac < 0) throw new Error('cac must be 0 or more');
+    const monthlyGross = arpu * gm;
+    const ltv = churn > 0 ? monthlyGross / churn : null;
+    return { ltv, ltvToCac: ltv !== null && cac > 0 ? ltv / cac : null, paybackMonths: cac / monthlyGross };
+  }
+
+  function project(inp, buildCost, months = 36) {
+    unitEconomics(inp);
+    const n1 = num(inp.newCustomersMonth1, 'newCustomersMonth1');
+    const g = num(inp.monthlyGrowth, 'monthlyGrowth');
+    const fixed = num(inp.fixedMonthlyCost, 'fixedMonthlyCost');
+    num(buildCost, 'buildCost');
+    if (n1 < 0) throw new Error('newCustomersMonth1 must be 0 or more');
+    if (g <= -1) throw new Error('monthlyGrowth must be above -1');
+    if (fixed < 0) throw new Error('fixedMonthlyCost must be 0 or more');
+    const rows = [];
+    let customers = 0, cumulative = -buildCost, breakEvenMonth = null;
+    for (let m = 1; m <= months; m++) {
+      const added = n1 * Math.pow(1 + g, m - 1);
+      customers = customers * (1 - inp.churn) + added;
+      const revenue = customers * inp.arpu;
+      const costs = fixed + added * inp.cac + revenue * (1 - inp.grossMargin);
+      const net = revenue - costs;
+      cumulative += net;
+      if (breakEvenMonth === null && cumulative >= -EPS) breakEvenMonth = m;
+      rows.push({ month: m, newCustomers: added, customers, revenue, costs, net, cumulative });
+    }
+    const years = [];
+    for (let y = 0; y * 12 < months; y++) {
+      const s = rows.slice(y * 12, y * 12 + 12);
+      years.push({ year: y + 1, revenue: sum(s, 'revenue'), costs: sum(s, 'costs'), net: sum(s, 'net') });
+    }
+    return { months: rows, years, breakEvenMonth, totalRevenue: sum(rows, 'revenue'), totalCosts: sum(rows, 'costs') };
+  }
+
+  function roi(p, buildCost) {
+    const cost = p.totalCosts + buildCost;
+    return cost > 0 ? (p.totalRevenue - cost) / cost : null;
+  }
+
+  function byReleaseTotals(pairs) {
+    const out = { byRelease: {}, weeksLow: 0, weeksHigh: 0 };
+    for (const [r, d] of pairs) { out.byRelease[r] = d; out.weeksLow += d.weeksLow; out.weeksHigh += d.weeksHigh; }
+    return out;
+  }
+
+  function sizeDuration(capabilities, developers) {
+    num(developers, 'team.developers');
+    if (developers <= 0) throw new Error('team.developers must be above 0');
+    if (!Array.isArray(capabilities) || capabilities.length === 0) throw new Error('capabilities must list at least one capability');
+    const ideal = {};
+    for (const c of capabilities) {
+      if (c.size === 'XL') throw new Error('capability "' + c.name + '" is XL: split it into S, M or L capabilities');
+      const s = SIZES[c.size];
+      if (!s) throw new Error('capability "' + c.name + '" has size "' + c.size + '"; use S, M or L');
+      if (!RELEASES.includes(c.release)) throw new Error('capability "' + c.name + '" has release "' + c.release + '"; use MVP, v1 or v2');
+      const r = ideal[c.release] || (ideal[c.release] = [0, 0]);
+      r[0] += s[0]; r[1] += s[1];
+    }
+    return byReleaseTotals(RELEASES.filter((r) => ideal[r]).map((r) => [r, {
+      weeksLow: up(ideal[r][0] / (developers * FOCUS[0]) * OVERHEAD[0]),
+      weeksHigh: up(ideal[r][1] / (developers * FOCUS[1]) * OVERHEAD[1]),
+    }]));
+  }
+
+  function teamVelocity(team) {
+    if (team.velocity === undefined) return [VELOCITY_PER_DEV[0] * team.developers, VELOCITY_PER_DEV[1] * team.developers];
+    const v = team.velocity;
+    if (!Array.isArray(v) || v.length !== 2 || !(typeof v[0] === 'number' && typeof v[1] === 'number') || !(v[0] > 0 && v[1] >= v[0]))
+      throw new Error('team.velocity must be [low, high] points per two-week sprint, with 0 < low <= high');
+    return v;
+  }
+
+  function pointsDuration(points, velocity) {
+    num(points, 'points');
+    if (points <= 0) throw new Error('points must be above 0');
+    return { weeksLow: up(points / velocity[1] * 2), weeksHigh: up(points / velocity[0] * 2) };
+  }
+
+  function pointsDurationByRelease(pointsByRelease, velocity) {
+    const keys = Object.keys(pointsByRelease || {});
+    if (!keys.length) throw new Error('backlog.pointsByRelease must have at least one release');
+    for (const k of keys) if (!RELEASES.includes(k)) throw new Error('backlog.pointsByRelease has release "' + k + '"; use MVP, v1 or v2');
+    return byReleaseTotals(RELEASES.filter((r) => keys.includes(r)).map((r) => [r, pointsDuration(pointsByRelease[r], velocity)]));
+  }
+
+  function drift(a, b) {
+    const ma = (a.weeksLow + a.weeksHigh) / 2, mb = (b.weeksLow + b.weeksHigh) / 2;
+    return Math.abs(mb - ma) / ma;
+  }
+
+  function buildCost(monthlyCost, d) {
+    num(monthlyCost, 'team.monthlyCost');
+    if (monthlyCost < 0) throw new Error('team.monthlyCost must be 0 or more');
+    return { low: monthlyCost * d.weeksLow / WEEKS_PER_MONTH, high: monthlyCost * d.weeksHigh / WEEKS_PER_MONTH };
+  }
+
+  function scenarioInputs(data, name) {
+    const s = data.scenarios && data.scenarios[name];
+    if (!s) throw new Error('scenarios.' + name + ' is missing (use {} to keep the base assumptions)');
+    return Object.assign({}, data.assumptions, s);
+  }
+
+  function formatters(meta) {
+    const lang = meta.lang === 'ar' ? 'ar' : 'en', loc = lang + '-u-nu-latn';
+    const f = (o) => new Intl.NumberFormat(loc, o);
+    const usd = f({ style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+    return {
+      lang,
+      money: (v) => f({ style: 'currency', currency: meta.currency, maximumFractionDigits: 0 }).format(v),
+      usd: (v) => usd.format(v),
+      dec: (v) => f({ maximumFractionDigits: 1 }).format(v),
+      dec2: (v) => f({ maximumFractionDigits: 2 }).format(v),
+      int: (v) => f({ maximumFractionDigits: 0 }).format(v),
+      pct: (v) => f({ style: 'percent', maximumFractionDigits: 0 }).format(v),
+      compact: (v) => f({ notation: 'compact', maximumFractionDigits: 1 }).format(v),
+    };
+  }
+
+  function values(data, c) {
+    const F = formatters(data.meta), T = TEXT[F.lang], v = {};
+    const usdRate = data.meta.currency === 'USD' ? null : data.meta.usdRate;
+    const money = (k, x) => { v[k] = F.money(x); if (usdRate !== null) v[k + '.usd'] = F.usd(x * usdRate); };
+    const range = (a, b, f) => f(a) + ' – ' + f(b);
+    for (const k of ['tam', 'sam', 'som']) money(k, data.market[k]);
+    const base = scenarioInputs(data, 'base');
+    money('arpu', base.arpu);
+    money('cac', base.cac);
+    if (c.unit.ltv === null) v.ltv = T.na; else money('ltv', c.unit.ltv);
+    v.ltvToCac = c.unit.ltvToCac === null ? T.na : F.dec(c.unit.ltvToCac) + '×';
+    v.paybackMonths = F.dec(c.unit.paybackMonths);
+    v.durationWeeks = range(c.duration.weeksLow, c.duration.weeksHigh, F.int);
+    v.sizedWeeks = range(c.sized.weeksLow, c.sized.weeksHigh, F.int);
+    for (const r of RELEASES) {
+      const d = c.duration.byRelease[r];
+      if (d) v['weeks.' + r] = range(d.weeksLow, d.weeksHigh, F.int);
+    }
+    v.buildCost = range(c.buildCost.low, c.buildCost.high, F.money);
+    if (usdRate !== null) v['buildCost.usd'] = range(c.buildCost.low * usdRate, c.buildCost.high * usdRate, F.usd);
+    for (const s of SCENARIOS) {
+      const p = c.scenarios[s];
+      for (const y of p.years) { money(s + '.revenueY' + y.year, y.revenue); money(s + '.netY' + y.year, y.net); }
+      v[s + '.breakEvenMonth'] = p.breakEvenMonth === null ? T.noBreakEven : F.int(p.breakEvenMonth);
+      v[s + '.roi'] = p.roi === null ? T.na : F.pct(p.roi);
+    }
+    if (c.drift !== null) {
+      v.drift = F.pct(c.drift);
+      v.backlogPoints = F.int(Object.values(data.backlog.pointsByRelease).reduce((a, b) => a + b, 0));
+    }
+    return v;
+  }
+
+  function computeAll(data) {
+    for (const k of ['meta', 'market', 'assumptions', 'scenarios', 'team', 'capabilities'])
+      if (!data || data[k] === undefined) throw new Error('data block needs "' + k + '"');
+    if (!/^[A-Z]{3}$/.test(data.meta.currency || '')) throw new Error('meta.currency must be an ISO code such as USD or EGP');
+    if (data.meta.currency !== 'USD') {
+      num(data.meta.usdRate, 'meta.usdRate (USD per 1 ' + data.meta.currency + ')');
+      if (data.meta.usdRate <= 0) throw new Error('meta.usdRate must be above 0');
+    }
+    const m = data.market;
+    for (const k of ['tam', 'sam', 'som']) num(m[k], 'market.' + k);
+    if (!(m.tam >= m.sam && m.sam >= m.som && m.som > 0)) throw new Error('market must have tam >= sam >= som > 0');
+    const sized = sizeDuration(data.capabilities, data.team.developers);
+    const pbr = data.backlog && data.backlog.pointsByRelease;
+    const duration = pbr ? pointsDurationByRelease(pbr, teamVelocity(data.team)) : sized;
+    const cost = buildCost(data.team.monthlyCost, duration);
+    const mid = (cost.low + cost.high) / 2;
+    const out = {
+      sized, duration, buildCost: cost,
+      unit: unitEconomics(scenarioInputs(data, 'base')),
+      scenarios: {},
+      drift: pbr ? drift(sized, duration) : null,
+    };
+    for (const s of SCENARIOS) {
+      const p = project(scenarioInputs(data, s), mid);
+      p.roi = roi(p, mid);
+      out.scenarios[s] = p;
+    }
+    out.values = values(data, out);
+    return out;
+  }
+
+  root.NawahModel = {
+    unitEconomics, project, roi, sizeDuration, teamVelocity, pointsDuration, pointsDurationByRelease,
+    drift, buildCost, formatters, computeAll, RELEASES, SCENARIOS,
+  };
+})(typeof globalThis !== 'undefined' ? globalThis : this);
+</script>
+</body>
+</html>

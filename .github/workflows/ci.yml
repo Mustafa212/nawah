@@ -20,3 +20,12 @@ jobs:
           node-version: 22
       - name: claude plugin validate
         run: npx -y @anthropic-ai/claude-code@2.1.301 plugin validate .
+  model:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: report model figures
+        run: node tests/model_test.js
