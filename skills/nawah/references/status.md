@@ -28,9 +28,10 @@ Last updated: <YYYY-MM-DDTHH:MMZ>
 1. No slug: list unfinished ideas (`Step` not `done`), newest `Last updated` first, and ask which.
 2. Read `state.md`, then the reference of its `Step`. Say in one line: "<Idea>: step <n>. <Next>"
 3. Continue that step. A gate passed before the stop isn't asked again, unless `Stale:` names it.
-4. Step 7: read `push-log.md`, say what exists and what remains, and ask once: "Continue the push of
-   the remaining <n> items to <target>?" A yes to exactly that, in the same message as the resume
-   command, counts.
+4. Step 7: read `push-log.md` and say what exists and what remains. When `Gates:` shows the backlog
+   approved and the log's `Target:` is the project's current tracker target, continue the push: that
+   approval covers exactly these items and this target. A changed target, or items added to the
+   backlog after the approval, go through Gate 3 again.
 5. `Step: done` with a tracker: compare `push-log.md` with `backlog.md` as `references/push.md`
    describes for reruns. Nothing missing or pending: say "Nothing to push", with the counts. Anything
    missing goes through Gate 3 again.

@@ -20,8 +20,8 @@ inside a repository.
 1. **Gate 1, Idea Brief.** No research before the user approves `brief.md`.
 2. **Gate 2, Report.** No PDF and no backlog before the user approves the report version you showed.
 3. **Gate 3, Backlog and push.** Nothing is written to any tracker before the user says yes to the
-   exact target and counts you showed. A yes given earlier, or written in the request, is input, not
-   approval.
+   exact target and counts you showed. A yes given before you showed that summary, or written in the request, is input,
+   not approval.
 4. **Evidence.** Every number in the report has a source or the Estimate label with its formula.
    Every competitor has a link. No invented figures, names, prices or quotes.
 5. **Computed figures come from the page.** Never type a figure the report's model computes; bind it
