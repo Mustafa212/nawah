@@ -108,8 +108,10 @@ skills/nawah/references/
   trackers/azure-devops.md, jira.md, github.md, file.md
 skills/nawah/assets/report-template.html
 agents/researcher.md, scout.md, backlog-reviewer.md
-scripts/render-pdf.sh, render-pdf.ps1
-tests/fixture/…, tests/check.sh, tests/model_test.js, tests/render_test.sh
+scripts/report.sh             check | values | pdf, in a headless Edge/Chrome/Chromium (Bash; Git Bash on Windows)
+scripts/item-hash.sh          checksum of one backlog item, for the push log
+tests/model_test.js, tests/report_sh_test.sh, tests/template_test.sh, tests/lint_backlog.js,
+tests/lint_backlog_test.sh, tests/item_hash_test.sh, tests/check.sh, tests/headless/*.sh, tests/fixture/…
 .github/workflows/ci.yml
 README.md, CHANGELOG.md, LICENSE (MIT), NOTICE
 ```
@@ -135,7 +137,8 @@ ideas/<slug>/
   snapshot.md                 existing project only
   brief.md                    Gate 1
   research.md
-  report.html, report.pdf     Gate 2
+  report.html                 Gate 2
+  report-v<n>.pdf             one per approved version, never overwritten (a sent PDF stays as sent)
   backlog.md, backlog.csv     Gate 3
   push-log.md                 step 7
 ```
@@ -153,8 +156,10 @@ question at a time:
   `<repo>`?"), when `--repo` or `--project` is given; else asks. `--new` skips the question.
 - **Audience:** investor, management or client.
 - **Report language:** formal Arabic (Modern Standard) or English.
+- **Backlog language:** English by default, or the report's language.
 - **Target market:** one or more countries; "global" is always researched too. Currency: the target
-  market's, with USD alongside.
+  market's; when it isn't USD, the data block carries the USD rate (with its source) and every money
+  figure can also be shown in USD (`<key>.usd` bindings).
 - **Team:** size and roles, their velocity if they have one, and
   monthly cost per role if known (otherwise researched local rates, labelled Estimate).
 
@@ -250,17 +255,25 @@ this investment (ROI, payback) when the audience is management.
 
 1. A data block, `<script type="application/json" id="nawah-data">`: language and direction,
    audience, currency, assumptions, scenarios, competitors (with their positioning coordinates),
-   market sizes, delivery plan, risks, sources.
-2. The narrative of each section, in HTML, inside the template's section slots (`<section
-   id="exec-summary">` … `<section id="appendix">`).
-3. Numbers inside the narrative written as bindings, `<span data-k="breakEvenMonth"></span>`, never
-   typed by hand.
+   market sizes, delivery plan, sources.
+2. The narrative of each section, in HTML, in place of the template's `<!-- SLOT <section id> -->`
+   markers (`<section id="exec-summary">` … `<section id="appendix">`). Section headings come from
+   the template in the report's language, so they are always formal and consistent.
+3. Numbers inside the narrative written as bindings, `<span data-k="base.breakEvenMonth"></span>`,
+   never typed by hand; research figures cited as `<sup data-src="4"></sup>`.
 
 An inline model script in the template computes every derived figure from the data block (unit
-economics, projections, break-even, ROI, duration ranges), fills the bindings, and draws the charts
-as inline SVG: TAM/SAM/SOM funnel, positioning map, revenue scenarios, Gantt, KPI tiles. No
-external chart library; the page works offline. Fonts: IBM Plex Sans Arabic / IBM Plex Sans from
-Google Fonts with system fallbacks (Segoe UI, Noto Sans).
+economics, projections, break-even, ROI, duration ranges), fills the bindings and citations, and
+draws the charts as inline SVG: TAM/SAM/SOM funnel, positioning map, revenue scenarios, Gantt, KPI
+tiles. No external chart library; the page works offline. Fonts: IBM Plex Sans Arabic / IBM Plex
+Sans from Google Fonts with system fallbacks (Segoe UI, Noto Sans).
+
+The page validates itself: an unknown binding, a citation to a missing source, a slot left empty, a
+competitor without a link, or a bad number makes it show a red error banner and set
+`<html data-nawah="error">` instead of printing NaN; a good page sets `data-nawah="ok"` and writes
+its computed values as JSON to `<script type="application/json" id="nawah-values">`.
+`scripts/report.sh check` reads that status in a headless browser and `report.sh values` prints the
+JSON, so the lead checks every version before the user sees it.
 
 So the narrative and the numbers can never disagree, and the arithmetic is tested once (§7), not
 redone by the model in every report.
@@ -276,8 +289,11 @@ page numbers, `dir="rtl"` for Arabic.
 - Unit economics: ARPU, gross margin, monthly churn, blended CAC;
   LTV = ARPU × gross margin ÷ churn; LTV:CAC; payback months = CAC ÷ (ARPU × gross margin).
 - Projection: 36 months for three scenarios (conservative, base, optimistic), each driven by the
-  same small assumption set: starting customers, monthly growth, churn, ARPU, CAC, fixed monthly
-  costs. Yearly revenue, costs, net; break-even month (or "not within 36 months").
+  same small assumption set: new customers in month 1, the monthly growth of new customers, churn,
+  ARPU, gross margin, CAC, fixed monthly costs. Customers(m) = customers(m−1) × (1 − churn) +
+  new(m); costs(m) = fixed + new(m) × CAC + revenue(m) × (1 − gross margin). Yearly revenue, costs,
+  net; break-even month = the first month the cumulative net, starting from minus the build cost,
+  reaches zero (or "not within 36 months").
 - Build cost = monthly team cost × duration range. Running cost = hosting, third-party services,
   support, marketing.
 - Management audience: 3-year ROI = (benefit − cost) ÷ cost, and payback period.
@@ -298,13 +314,16 @@ QA hardening and release. Re-checked against story points at step 6 (§5.6).
 
 #### 5.5.5 Rendering and review
 
-- `scripts/render-pdf.sh` / `.ps1 <html> <pdf>` find Edge, Chrome or Chromium and run headless
-  `--print-to-pdf` with no header or footer and a virtual-time budget so the model script finishes.
-  No browser found: say so, and tell the user to open the HTML and print it to PDF.
-- Review: the lead opens `report.html` in the browser and asks for changes in chat; each round
-  edits the page and bumps the report version shown on the cover. Publishing it as a shareable
-  Artifact happens only when the user asks.
-- **Gate 2:** on approval, render `report.pdf` and record the approved version in `state.md`.
+- `scripts/report.sh pdf <html> <pdf>` finds Edge, Chrome or Chromium (or `$NAWAH_BROWSER`) and runs
+  it headless with a throwaway profile, `--print-to-pdf`, no header or footer, and a virtual-time
+  budget so the model script finishes. It refuses a page whose check fails. No browser found (exit
+  2): say so, and tell the user to open the HTML and print it to PDF. One Bash script serves every
+  platform (on Windows it runs in Git Bash, as Claude Code's Bash tool does).
+- Review: the lead runs `report.sh check`, then opens `report.html` in the browser (skipped when
+  `NAWAH_NO_OPEN` is set, for tests) and asks for changes in chat; each round edits the page and
+  bumps the report version shown on the cover. Publishing it as a shareable Artifact happens only
+  when the user asks.
+- **Gate 2:** on approval, render `report-v<n>.pdf` and record the approved version in `state.md`.
 
 ### 5.6 Decompose (`references/backlog.md`, `agents/backlog-reviewer.md`)
 
@@ -356,12 +375,15 @@ Open questions: <text or none>
   tracker's backlog.
 
 **Estimation:** Fibonacci points against a reference story, 1 point ≈ half an ideal developer-day.
-Velocity per developer per two-week sprint: the team's real velocity if given, else 12–16 points
-(assumption, labelled). Duration range = total points ÷ team velocity.
+Team velocity per two-week sprint: the team's real velocity if given, else 12–16 points per
+developer (assumption, labelled). Duration per release = its points ÷ team velocity × 2 weeks.
 
-**Timeline re-check:** if the backlog's duration midpoint differs from the report's by more than
-20 %, the lead says so, updates sections 6 and 8 of the report (the data block, so every figure
-follows), bumps its version and re-renders the PDF. The change is shown at Gate 3 for approval.
+**Timeline re-check:** the lead always writes the backlog's points per release into the report's
+data block, so the report's duration, Gantt, build cost and break-even follow the real backlog. The
+report-time sizing stays as `sizedWeeks`, and the model computes `drift` between the two. The report
+gets a new version; the change (old range → new range, cost difference) is shown at Gate 3, flagged
+prominently when the drift is over 20 %. The Gate 3 yes approves that version, and its PDF is
+rendered then.
 
 **Blind backlog review:** the backlog-reviewer agent receives only `brief.md`, `backlog.md` and, in
 existing-project mode, the existing backlog list, never the conversation. Tools: Read. It checks
@@ -433,7 +455,8 @@ Different clients get different project files; the plugin itself names no organi
   GitHub).
 - Tags on every item: `nawah` and `nawah:<slug>`, plus the release where the release is a tag.
 - `push-log.md`: one row per item, written immediately after each create:
-  `local id | tracker id | URL | created at | content hash | links pending`.
+  `local id | tracker id | URL | created at | content hash | links pending`. The hash comes from
+  `scripts/item-hash.sh <backlog.md> <id>` (a checksum of the item's block), never from the model.
 - **No duplicates:** a rerun skips every id already in the log. An item whose content hash no
   longer matches `backlog.md` is listed with its diff so the user can update it in the tracker; v1
   does not edit pushed items.
@@ -453,11 +476,13 @@ Project: <project or none>
 Repos: <paths or none>
 Audience: investor | management | client
 Language: ar | en
+Backlog language: en | ar
 Market: <countries>
 Currency: <code>
 Team: <summary>
-Step: <0–7>
+Step: <1–7 | done>
 Gates: brief <date or ->, report v<n> <date or ->, backlog <date or ->
+Stale: <steps whose output an earlier change invalidated, or none>
 Next: <one line>
 Last updated: <timestamp>
 ```
@@ -492,14 +517,25 @@ Last updated: <timestamp>
 1. **Manifests:** `plugin.json` and `marketplace.json` parse, agree on the name, and pass
    `claude plugin validate`.
 2. **`tests/check.sh`:** every adapter defines every operation in §5.7; every field label in the
-   `backlog.md` format is the one `push.md` and the adapters read; every section id in
-   `references/report.md` exists in the template and vice versa.
+   `backlog.md` format is linted and reviewed; every section id in `references/report.md` exists in
+   the template and vice versa; every reference `SKILL.md` names exists; size and layout rules for
+   the skill files.
 3. **`tests/model_test.js`** (Node): extracts the template's model script and checks LTV, payback,
-   break-even, the 36-month projection, ROI and duration ranges against hand-computed values for the
-   fixture's data block, including the "no break-even within 36 months" case.
-4. **`tests/render_test.sh`:** renders the Arabic and English fixture reports to PDF (Chrome on
-   Ubuntu, Edge on Windows) and checks each output starts with `%PDF` and is larger than a minimum
-   size.
+   break-even, the 36-month projection, ROI, duration ranges, drift and formatted values against
+   hand-computed values, including "no break-even within 36 months", invalid inputs, and that every
+   binding `report.md` documents exists.
+4. **`tests/report_sh_test.sh`** and **`tests/template_test.sh`:** `report.sh` on small pages and on
+   the Arabic and English fixture reports (built from the template), in a folder whose name has a
+   space, parentheses and Arabic characters: `check` passes or names the error, `pdf` writes a file
+   starting with `%PDF`, a broken page is refused, a missing browser exits 2. Chrome on Ubuntu, Edge
+   on Windows.
+5. **`tests/lint_backlog_test.sh`** and **`tests/item_hash_test.sh`:** the backlog lint on a good
+   and a bad fixture (exact problems expected), and the item checksum.
+
+**Headless runs** (`tests/headless/*.sh`, local, `claude -p --plugin-dir`, cost tokens): `/nawah
+status`; the researcher and scout agents on fixtures; the report built from a fixture brief and
+research; the backlog built from a fixture report; a push to the `file` tracker resumed after an
+interruption, then rerun, with no duplicates.
 
 **Live tests before 1.0.0**, run with the user:
 1. A full new idea with the `file` tracker: nothing written anywhere outside the idea folder.
@@ -514,8 +550,8 @@ A tracker that has not passed its live test is marked **experimental** in the RE
 ## 8. Build order
 
 1. Repository skeleton: manifests, LICENSE, NOTICE, CI with the manifest job.
-2. Report template: data block, model script, charts, print layout; `model_test.js`; render scripts
-   and `render_test.sh`; Arabic and English fixtures.
+2. Report template: data block, model script, charts, print layout; `model_test.js`; `report.sh`
+   and its tests; Arabic and English fixtures.
 3. `SKILL.md`, `intake.md`, `brainstorm.md`, `research.md` + researcher agent, `report.md`.
 4. `backlog.md` + backlog-reviewer agent, `file` adapter, `push.md`, `status.md`.
 5. `setup.md` and the GitHub, Azure DevOps and Jira adapters.
