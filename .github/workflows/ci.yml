@@ -50,3 +50,12 @@ jobs:
         env:
           NAWAH_BROWSER_FLAGS: ${{ runner.os == 'Linux' && '--no-sandbox' || '' }}
         run: bash tests/template_test.sh
+  contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: backlog lint
+        run: bash tests/lint_backlog_test.sh
