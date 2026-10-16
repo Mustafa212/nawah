@@ -51,6 +51,13 @@ t('churn and growth compound', () => {
   const q = M.project({ ...simple, newCustomersMonth1: 100, churn: 0.1, monthlyGrowth: 0.1 }, 0);
   close(q.months[1].customers, 200); close(q.months[2].customers, 301);
 });
+t('growth above 100 % a month is rejected', () => assert.throws(() => M.project({ ...simple, monthlyGrowth: 8 }, 0), /monthlyGrowth must be at most 1 \(0\.08 means 8 %\)/));
+t('formatters reject a value that is not a finite number', () => {
+  const F = M.formatters({ lang: 'en', currency: 'EGP' });
+  for (const k of ['money', 'usd', 'dec', 'dec2', 'int', 'pct', 'compact'])
+    for (const x of [NaN, Infinity, -Infinity, undefined]) assert.throws(() => F[k](x), /must be a number/, k + '(' + x + ')');
+  assert.strictEqual(F.int(1234.4), '1,234');
+});
 t('yearly totals and break-even', () => {
   const p = M.project(simple, 10000);
   close(p.years[0].revenue, 15600); close(p.years[0].costs, 19920); close(p.years[0].net, -4320);
@@ -69,6 +76,7 @@ t('duration from sizes', () => {
   assert.strictEqual(d.weeksLow, 6); assert.strictEqual(d.weeksHigh, 16);
 });
 t('an XL capability must be split', () => assert.throws(() => M.sizeDuration([{ name: 'x', release: 'MVP', size: 'XL' }], 2), /"x" is XL: split it/));
+t('a size named after an Object property is rejected', () => assert.throws(() => M.sizeDuration([{ name: 'x', release: 'MVP', size: 'constructor' }], 2), /size "constructor"/));
 t('an unknown release is rejected', () => assert.throws(() => M.sizeDuration([{ name: 'x', release: 'v3', size: 'S' }], 2), /release "v3"/));
 t('default team velocity', () => eq(M.teamVelocity({ developers: 2 }), [24, 32]));
 t('a bad team velocity is rejected', () => assert.throws(() => M.teamVelocity({ developers: 2, velocity: [30, 20] }), /team.velocity/));

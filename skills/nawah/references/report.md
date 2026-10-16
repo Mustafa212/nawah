@@ -130,7 +130,8 @@ hardening and release. Step 6 replaces this with the backlog's points.
 5. Ask: "Approve report version <n>, or tell me what to change."
 6. Changes: edit, raise `meta.version` by one, check, reopen, ask again.
 7. Approved: `bash "${CLAUDE_PLUGIN_ROOT}/scripts/report.sh" pdf "<report.html>" "<idea folder>/report-v<n>.pdf"`.
-   Exit 2 (no browser): tell the user to open `report.html`, print it to PDF (A4, no headers and
+   It never overwrites an existing PDF (exit 2 "exists": that version was already approved). Exit 2
+   with no browser found: tell the user to open `report.html`, print it to PDF (A4, no headers and
    footers, background graphics on) and save it as `report-v<n>.pdf` in the idea folder. Then
    `Gates: … report v<n> <date>`, `Step: 6`.
 8. A shareable link (Artifact) only when the user asks for one.

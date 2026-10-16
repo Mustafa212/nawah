@@ -36,7 +36,8 @@ reaches a tracker without your yes.
 ## Requirements
 - Claude Code, with web search for the research step.
 - Edge, Chrome or Chromium for the PDF (or set `NAWAH_BROWSER`). Without one, you get the HTML report and
-  print it yourself.
+  print it yourself. Snap-packaged Chromium can't open files in hidden folders such as `~/.claude`: set
+  `NAWAH_BROWSER` to another browser, or `NAWAH_HOME` to a visible folder.
 - For a tracker: Azure DevOps (a PAT in an env var, or an MCP server), Jira Cloud (an API token and your
   e-mail in env vars, or an MCP server), or GitHub (`gh`, logged in). nawah stores only env var names.
 

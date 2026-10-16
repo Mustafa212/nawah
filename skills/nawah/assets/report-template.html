@@ -248,6 +248,7 @@ html[data-nawah="error"] #nawah-error { display: block; position: sticky; top: 0
     num(buildCost, 'buildCost');
     if (n1 < 0) throw new Error('newCustomersMonth1 must be 0 or more');
     if (g <= -1) throw new Error('monthlyGrowth must be above -1');
+    if (g > 1) throw new Error('monthlyGrowth must be at most 1 (0.08 means 8 %)');
     if (fixed < 0) throw new Error('fixedMonthlyCost must be 0 or more');
     const rows = [];
     let customers = 0, cumulative = -buildCost, breakEvenMonth = null;
@@ -287,7 +288,7 @@ html[data-nawah="error"] #nawah-error { display: block; position: sticky; top: 0
     const ideal = {};
     for (const c of capabilities) {
       if (c.size === 'XL') throw new Error('capability "' + c.name + '" is XL: split it into S, M or L capabilities');
-      const s = SIZES[c.size];
+      const s = Object.prototype.hasOwnProperty.call(SIZES, c.size) && SIZES[c.size];
       if (!s) throw new Error('capability "' + c.name + '" has size "' + c.size + '"; use S, M or L');
       if (!RELEASES.includes(c.release)) throw new Error('capability "' + c.name + '" has release "' + c.release + '"; use MVP, v1 or v2');
       const r = ideal[c.release] || (ideal[c.release] = [0, 0]);
@@ -339,17 +340,17 @@ html[data-nawah="error"] #nawah-error { display: block; position: sticky; top: 0
 
   function formatters(meta) {
     const lang = meta.lang === 'ar' ? 'ar' : 'en', loc = lang + '-u-nu-latn';
-    const f = (o) => new Intl.NumberFormat(loc, o);
-    const usd = f({ style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+    // Every formatter passes num(): a NaN or an Infinity is an error, never "NaN" or "∞" on the page.
+    const f = (o) => { const nf = new Intl.NumberFormat(loc, o); return (v) => nf.format(num(v, 'a computed figure (' + v + ')')); };
     return {
       lang,
-      money: (v) => f({ style: 'currency', currency: meta.currency, maximumFractionDigits: 0 }).format(v),
-      usd: (v) => usd.format(v),
-      dec: (v) => f({ maximumFractionDigits: 1 }).format(v),
-      dec2: (v) => f({ maximumFractionDigits: 2 }).format(v),
-      int: (v) => f({ maximumFractionDigits: 0 }).format(v),
-      pct: (v) => f({ style: 'percent', maximumFractionDigits: 0 }).format(v),
-      compact: (v) => f({ notation: 'compact', maximumFractionDigits: 1 }).format(v),
+      money: (v) => f({ style: 'currency', currency: meta.currency, maximumFractionDigits: 0 })(v),
+      usd: f({ style: 'currency', currency: 'USD', maximumFractionDigits: 0 }),
+      dec: f({ maximumFractionDigits: 1 }),
+      dec2: f({ maximumFractionDigits: 2 }),
+      int: f({ maximumFractionDigits: 0 }),
+      pct: f({ style: 'percent', maximumFractionDigits: 0 }),
+      compact: f({ notation: 'compact', maximumFractionDigits: 1 }),
     };
   }
 
@@ -503,6 +504,8 @@ html[data-nawah="error"] #nawah-error { display: block; position: sticky; top: 0
   const legend = (items, x, y) => items.map(([label, color], i) => rect(x + i * 150, y - 10, 12, 12, color, 2) + text(x + i * 150 + 18, y, label)).join('');
   const inRange = (v) => typeof v === 'number' && v >= 0 && v <= 10;
   const isUrl = (u) => /^https?:\/\/\S+$/.test(u || '');
+  const own = (o, k) => Object.prototype.hasOwnProperty.call(o, k); // so "constructor" isn't a known key
+  const PARTS = 'h2, [data-reco], [data-chart], #appendix-assumptions-h, #assumptions-table, #appendix-sources-h, #sources-list';
 
   function validate(d) {
     const m = d.meta || {}, sourceIds = new Set();
@@ -513,12 +516,16 @@ html[data-nawah="error"] #nawah-error { display: block; position: sticky; top: 0
     if (!Number.isInteger(m.version) || m.version < 1) errors.push('meta.version must be a whole number from 1');
     (d.sources || []).forEach((s, i) => {
       if (!Number.isInteger(s.id) || !s.title || !isUrl(s.url) || !s.accessed) errors.push(`sources[${i}] needs id (a number), title, url (http…) and accessed`);
+      else if (sourceIds.has(s.id)) errors.push(`sources[${i}] repeats id ${s.id}`);
       else sourceIds.add(s.id);
     });
     const cites = (id, where) => { if (!sourceIds.has(id)) errors.push(`${where} cites [${id}], which is not in sources`); };
     ((d.market && d.market.sources) || []).forEach((id) => cites(id, 'market.sources'));
     (d.assumptionNotes || []).forEach((a, i) => { if (a.source != null) cites(a.source, `assumptionNotes[${i}]`); });
-    if (m.currency && m.currency !== 'USD' && m.usdRateSource != null) cites(m.usdRateSource, 'meta.usdRateSource');
+    if (m.currency && m.currency !== 'USD') {
+      if (m.usdRateSource == null) errors.push('meta.usdRateSource is missing: the id of the exchange rate\'s source');
+      else cites(m.usdRateSource, 'meta.usdRateSource');
+    }
     if (!(d.competitors || []).length) errors.push('competitors must list at least one competitor or substitute');
     (d.competitors || []).forEach((k, i) => {
       if (!k.name || !isUrl(k.url)) errors.push(`competitors[${i}] needs a name and a link (http…)`);
@@ -549,8 +556,12 @@ html[data-nawah="error"] #nawah-error { display: block; position: sticky; top: 0
       if (h) h.textContent = id === 'closing' ? T.closing[audience] : T[id];
       const c = sec.querySelector('.confidence');
       const level = c && c.getAttribute('data-level');
-      if (!c || !T.level[level]) errors.push(`section "${id}" needs its confidence set: data-level="High", "Medium" or "Low"`);
+      if (!c || !own(T.level, level)) errors.push(`section "${id}" needs its confidence set: data-level="High", "Medium" or "Low"`);
       else c.textContent = `${T.confidence}: ${T.level[level]}`;
+      // Text beyond the heading and the parts the template fills itself; a SLOT marker is reported below.
+      const rest = sec.cloneNode(true);
+      rest.querySelectorAll(PARTS).forEach((e) => e.remove());
+      if (!rest.textContent.trim() && !/<!--\s*SLOT /.test(sec.innerHTML)) errors.push(`section "${id}" has no content`);
     }
     const walker = doc.createTreeWalker(doc.body, NodeFilter.SHOW_COMMENT);
     for (let n = walker.nextNode(); n; n = walker.nextNode()) {
@@ -562,7 +573,7 @@ html[data-nawah="error"] #nawah-error { display: block; position: sticky; top: 0
   function bind(values) {
     for (const el of $$('[data-k]')) {
       const k = el.getAttribute('data-k');
-      if (k in values) el.textContent = values[k];
+      if (own(values, k) && values[k] !== undefined) el.textContent = values[k];
       else errors.push(`unknown figure data-k="${k}"`);
     }
   }
@@ -649,13 +660,18 @@ html[data-nawah="error"] #nawah-error { display: block; position: sticky; top: 0
   function appendix(T, d) {
     const F = M.formatters(d.meta), base = Object.assign({}, d.assumptions, d.scenarios.base);
     const fmt = { arpu: F.money, cac: F.money, fixedMonthlyCost: F.money, grossMargin: F.pct, churn: F.pct, monthlyGrowth: F.pct, newCustomersMonth1: F.int };
-    const valueOf = (a) => (a.key in fmt ? fmt[a.key](base[a.key])
+    const valueOf = (a) => (own(fmt, a.key) ? fmt[a.key](base[a.key])
       : a.key === 'team.monthlyCost' ? F.money(d.team.monthlyCost)
       : a.key === 'team.developers' ? F.int(d.team.developers)
-      : (a.value == null ? '' : a.value));
+      : a.value);
     const src = (id) => (id == null ? esc(T.estimate) : `<a href="#src-${id}">[${id}]</a>`);
-    let rows = (d.assumptionNotes || []).map((a) =>
-      `<tr><td>${esc(T.assumption[a.key] || a.label || a.key)}</td><td>${esc(valueOf(a))}</td><td>${esc(a.note || '')}</td><td>${src(a.source)}</td></tr>`).join('');
+    let rows = (d.assumptionNotes || []).map((a, i) => {
+      if (!own(T.assumption, a.key) && !(a.label && a.value != null)) {
+        errors.push(`assumptionNotes[${i}] needs a known key (${Object.keys(T.assumption).join(', ')}) or a label and a value`);
+        return '';
+      }
+      return `<tr><td>${esc(own(T.assumption, a.key) ? T.assumption[a.key] : a.label)}</td><td>${esc(valueOf(a))}</td><td>${esc(a.note || '')}</td><td>${src(a.source)}</td></tr>`;
+    }).join('');
     if (d.meta.currency !== 'USD') {
       rows += `<tr><td>${esc(T.rate)}</td><td>1 USD = ${esc(F.dec2(1 / d.meta.usdRate))} ${esc(d.meta.currency)}</td><td></td><td>${src(d.meta.usdRateSource)}</td></tr>`;
     }

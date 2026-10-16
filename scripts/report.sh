@@ -2,9 +2,9 @@
 # nawah report tool: runs a report page in a headless Edge, Chrome or Chromium.
 #   report.sh check  <report.html>            prints "ok", or the page's errors on stderr (exit 1)
 #   report.sh values <report.html>            prints the page's computed values as JSON (exit 1 if the check fails)
-#   report.sh pdf    <report.html> <out.pdf>  prints a page that passes the check to an A4 PDF
+#   report.sh pdf    <report.html> <out.pdf>  prints a page that passes the check to an A4 PDF; never overwrites out.pdf
 # Browser: $NAWAH_BROWSER when set, else the first one found. Extra browser flags: $NAWAH_BROWSER_FLAGS.
-# Exit: 0 ok; 1 the page has errors or no PDF was written; 2 bad usage, a missing file or no browser.
+# Exit: 0 ok; 1 the page has errors or no PDF was written; 2 bad usage, a missing file, an existing out.pdf or no browser.
 set -u
 
 die() { code="$1"; shift; printf 'report.sh: %s\n' "$*" >&2; exit "$code"; }
@@ -59,6 +59,10 @@ case "$cmd" in
 esac
 [ -f "$2" ] || die 2 "no such file: $2"
 in="$(absolute "$2")" || exit 2
+if [ "$cmd" = pdf ]; then
+  out="$(absolute "$3")" || exit 2
+  [ -e "$out" ] && die 2 "$out exists; an approved PDF is never overwritten (raise meta.version)"
+fi
 browser="$(find_browser)" || exit 2
 profile="$(mktemp -d)"
 trap 'rm -rf "$profile" 2>/dev/null' EXIT
@@ -67,7 +71,7 @@ page="$(run --dump-dom "$(native "$in")")"
 case "$(status_of "$page")" in
   'data-nawah="ok"') ;;
   'data-nawah="error"') errors_of "$page" >&2; exit 1 ;;
-  *) die 1 "the page didn't finish computing (no data-nawah status on <html>); open it in a browser to see why" ;;
+  *) die 1 "the page didn't finish computing (no data-nawah status on <html>); open it in a browser to see why (snap-packaged Chromium can't open files in hidden folders; set NAWAH_BROWSER to another browser or NAWAH_HOME to a visible folder)" ;;
 esac
 
 case "$cmd" in
@@ -75,9 +79,7 @@ case "$cmd" in
   values)
     printf '%s\n' "$page" | sed -n 's/.*<script type="application\/json" id="nawah-values">\(.*\)<\/script>.*/\1/p' ;;
   pdf)
-    out="$(absolute "$3")" || exit 2
-    rm -f "$out"
     run --no-pdf-header-footer --print-to-pdf-no-header --print-to-pdf="$(native "$out")" "$(native "$in")" >/dev/null
-    { [ -s "$out" ] && [ "$(head -c 4 "$out")" = "%PDF" ]; } || die 1 "no PDF was written to $out"
+    { [ -s "$out" ] && [ "$(head -c 4 "$out")" = "%PDF" ]; } || { rm -f "$out"; die 1 "no PDF was written to $out"; }
     printf '%s\n' "$out" ;;
 esac

@@ -23,12 +23,16 @@ check "the English PDF is written" 'bash "$r" pdf "$d/en.html" "$d/report v1.pdf
 check "the Arabic PDF is written" 'bash "$r" pdf "$d/ar.html" "$d/تقرير v1.pdf" >/dev/null && [ "$(head -c 4 "$d/تقرير v1.pdf")" = "%PDF" ]'
 check "the unfilled template is refused" 'bash "$r" check "$here/skills/nawah/assets/report-template.html" 2>&1 | grep -q "has no content yet"'
 
-for k in slot key source xl level; do node "$fill" "$d/bad-$k.html" --break "$k"; done
+for k in slot key source xl level proto note empty sources; do node "$fill" "$d/bad-$k.html" --break "$k"; done
 check "an empty section is named" 'bash "$r" check "$d/bad-slot.html" 2>&1 | grep -qF "section \"risks\" has no content yet"'
 check "an unknown figure is named" 'bash "$r" check "$d/bad-key.html" 2>&1 | grep -qF "unknown figure data-k=\"base.revenueY9\""'
 check "a missing source is named" 'bash "$r" check "$d/bad-source.html" 2>&1 | grep -qF "citation data-src=\"99\" names a source that is not in sources"'
 check "an XL capability is named" 'bash "$r" check "$d/bad-xl.html" 2>&1 | grep -qF "is XL: split it"'
 check "a bad confidence level is named" 'bash "$r" check "$d/bad-level.html" 2>&1 | grep -qF "needs its confidence set"'
+check "a figure named after an Object property is refused" 'bash "$r" check "$d/bad-proto.html" 2>&1 | grep -qF "unknown figure data-k=\"constructor\""'
+check "an assumption note without a known key or a label and value is named" 'bash "$r" check "$d/bad-note.html" 2>&1 | grep -qF "assumptionNotes[4] needs a known key"'
+check "a section emptied without its SLOT marker is named" 'bash "$r" check "$d/bad-empty.html" 2>&1 | grep -qE "section \"validation\" has no content$"'
+check "a repeated source id and a missing exchange-rate source are named" 'e="$(bash "$r" check "$d/bad-sources.html" 2>&1)"; grep -qF "sources[4] repeats id 1" <<< "$e" && grep -qF "meta.usdRateSource is missing" <<< "$e"'
 check "a broken report gets no PDF" '! bash "$r" pdf "$d/bad-key.html" "$d/bad.pdf" 2>/dev/null && [ ! -e "$d/bad.pdf" ]'
 
 rm -rf "${top:?}"

@@ -21,7 +21,10 @@ check "values prints the page's JSON" '[ "$(bash "$r" values "$d/ok.html")" = "{
 check "an error page fails with every message" 'out="$(bash "$r" check "$d/err.html" 2>&1)"; [ $? -eq 1 ] && grep -q "boom one" <<< "$out" && grep -q "boom two" <<< "$out"'
 check "a page that never reports fails" 'bash "$r" check "$d/none.html" 2>&1 | grep -q "didn.t finish computing"'
 check "pdf writes a PDF" 'bash "$r" pdf "$d/ok.html" "$d/out file.pdf" >/dev/null && [ "$(head -c 4 "$d/out file.pdf")" = "%PDF" ]'
+check "the didn't-finish message names the hidden-folder fix" 'bash "$r" check "$d/none.html" 2>&1 | grep -q "set NAWAH_BROWSER to another browser or NAWAH_HOME to a visible folder"'
 check "pdf refuses an error page" '! bash "$r" pdf "$d/err.html" "$d/err.pdf" 2>/dev/null && [ ! -e "$d/err.pdf" ]'
+printf 'sent' > "$d/sent.pdf"
+check "pdf never overwrites an existing PDF (exit 2, file untouched)" 'bash "$r" pdf "$d/ok.html" "$d/sent.pdf" 2>/dev/null; [ $? -eq 2 ] && [ "$(cat "$d/sent.pdf")" = sent ]'
 check "a missing browser exits 2" 'NAWAH_BROWSER=/nonexistent bash "$r" check "$d/ok.html" 2>/dev/null; [ $? -eq 2 ]'
 check "the missing-browser message says what to do" 'NAWAH_BROWSER=/nonexistent bash "$r" check "$d/ok.html" 2>&1 | grep -q "NAWAH_BROWSER"'
 check "no arguments exits 2" 'bash "$r" 2>/dev/null; [ $? -eq 2 ]'
