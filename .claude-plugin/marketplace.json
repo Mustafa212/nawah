@@ -1,0 +1,14 @@
+{
+  "name": "nawah",
+  "description": "The nawah plugin",
+  "owner": {
+    "name": "Mostafa Shawkey"
+  },
+  "plugins": [
+    {
+      "name": "nawah",
+      "source": "./",
+      "description": "From a raw idea to a business report you can send and a backlog in your tracker: brainstorm, cited research, a polished PDF report, then epics, features and stories with acceptance criteria pushed to Azure DevOps, Jira or GitHub Issues"
+    }
+  ]
+}

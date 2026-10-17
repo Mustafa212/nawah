@@ -1,0 +1,12 @@
+{
+  "name": "nawah",
+  "displayName": "Nawah",
+  "version": "1.0.0",
+  "description": "From a raw idea to a business report you can send and a backlog in your tracker: thinks the idea through with you, researches the market and local and global competitors with sources, writes a polished report (PDF), then breaks it into epics, features and stories with acceptance criteria and pushes them to Azure DevOps, Jira or GitHub Issues",
+  "author": {
+    "name": "Mostafa Shawkey"
+  },
+  "repository": "https://github.com/Mustafa212/nawah",
+  "license": "MIT",
+  "keywords": ["product", "business-case", "market-research", "backlog", "user-stories", "azure-devops", "jira", "github-issues"]
+}

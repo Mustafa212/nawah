@@ -1,0 +1,65 @@
+# Checks the manifests, the report model, the scripts, the report template and the file contracts.
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  manifests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: plugin.json and marketplace.json parse and agree on the name
+        run: |
+          name=$(jq -er .name .claude-plugin/plugin.json)
+          [ "$(jq -er '.plugins[0].name' .claude-plugin/marketplace.json)" = "$name" ]
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: claude plugin validate
+        run: npx -y @anthropic-ai/claude-code@2.1.301 plugin validate .
+  model:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: report model figures
+        run: node tests/model_test.js
+  render:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # On Windows this runs in Git Bash with Edge, as Claude's Bash tool does; on Ubuntu with Chrome.
+      - name: report.sh
+        shell: bash
+        env:
+          NAWAH_BROWSER_FLAGS: ${{ runner.os == 'Linux' && '--no-sandbox' || '' }}
+        run: bash tests/report_sh_test.sh
+      - name: report template
+        shell: bash
+        env:
+          NAWAH_BROWSER_FLAGS: ${{ runner.os == 'Linux' && '--no-sandbox' || '' }}
+        run: bash tests/template_test.sh
+  contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: backlog lint
+        run: bash tests/lint_backlog_test.sh
+      - name: item hash
+        run: bash tests/item_hash_test.sh
+      - name: file contracts
+        run: bash tests/check.sh

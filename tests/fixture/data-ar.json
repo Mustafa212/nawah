@@ -1,0 +1,44 @@
+{
+  "meta": {
+    "title": "نقاط قهوة: برنامج ولاء مشترك للمقاهي المستقلة",
+    "oneLiner": "للمقاهي المستقلة في القاهرة التي تخسر زبائنها الدائمين لصالح السلاسل الكبرى، تطبيق نقاط قهوة برنامج ولاء مشترك يكافئ الزيارات عبر شبكة من المقاهي؛ وبخلاف بطاقات الأختام الورقية، يعيد العميل إلى أي مقهى عضو في الشبكة.",
+    "lang": "ar",
+    "audience": "investor",
+    "recommendation": "Go with conditions",
+    "currency": "EGP",
+    "usdRate": 0.0204,
+    "usdRateSource": 4,
+    "date": "2026-10-16",
+    "version": 1,
+    "preparedBy": "شركة مثال للاستثمار (بيانات اختبار: كل الأرقام والشركات والمصادر مختلقة)"
+  },
+  "market": {"tam":2400000000,"sam":360000000,"som":18000000,"sources":[1]},
+  "assumptions": {"arpu":900,"grossMargin":0.8,"churn":0.03,"cac":2500,"newCustomersMonth1":15,"monthlyGrowth":0.08,"fixedMonthlyCost":60000},
+  "scenarios": {"conservative":{"newCustomersMonth1":8,"monthlyGrowth":0.05,"churn":0.05},"base":{},"optimistic":{"newCustomersMonth1":25,"monthlyGrowth":0.1,"churn":0.02}},
+  "team": {"developers":2,"monthlyCost":160000},
+  "capabilities": [
+    {"name":"تسجيل المقهى وأختام QR","release":"MVP","size":"M"},
+    {"name":"تطبيق العميل: النقاط والمكافآت","release":"MVP","size":"M"},
+    {"name":"لوحة تحكم المقهى","release":"MVP","size":"S"},
+    {"name":"شبكة مكافآت مشتركة بين المقاهي","release":"v1","size":"L"},
+    {"name":"العروض والحملات","release":"v2","size":"M"}
+  ],
+  "competitors": [
+    {"name":"بطاقة أختام (مثال)","url":"https://example.com/stamp","scope":"local","x":2,"y":3},
+    {"name":"تطبيق سلسلة (مثال)","url":"https://example.com/chain","scope":"local","x":6,"y":7},
+    {"name":"برنامج ولاء عالمي (مثال)","url":"https://example.org/loyalty","scope":"global","x":8,"y":6}
+  ],
+  "positioning": {"x":"السعر على المقهى (منخفض ← مرتفع)","y":"الانتشار عبر المقاهي (منخفض ← مرتفع)","us":{"x":3,"y":8}},
+  "assumptionNotes": [
+    {"key":"arpu","note":"اشتراك شهري لكل مقهى، أقل من رسوم تطبيق السلاسل","source":3},
+    {"key":"churn","note":"معيار برمجيات الشركات الصغيرة","source":3},
+    {"key":"cac","note":"زيارة مبيعات ميدانية واحدة مع الإعداد"},
+    {"key":"team.monthlyCost","note":"مطوران بمستوى متوسط في القاهرة","source":2}
+  ],
+  "sources": [
+    {"id":1,"title":"مثال: تقرير سوق المقاهي في مصر 2026","url":"https://example.com/cafe-report","accessed":"2026-10-16"},
+    {"id":2,"title":"مثال: مسح رواتب المطورين في القاهرة","url":"https://example.com/salaries","accessed":"2026-10-16"},
+    {"id":3,"title":"مثال: معايير برمجيات الشركات الصغيرة","url":"https://example.org/benchmarks","accessed":"2026-10-16"},
+    {"id":4,"title":"مثال: أسعار الصرف لدى البنك المركزي","url":"https://example.com/rates","accessed":"2026-10-16"}
+  ]
+}
