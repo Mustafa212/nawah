@@ -11,7 +11,11 @@ Gate 1.
   user answers by number; work out the next round from those answers.
 - Start from what the request already says; never ask what it answers.
 - Existing-project mode: start from `snapshot.md`: which current users the idea serves, what it
-  changes, what it must not break.
+  changes, what it must not break. When an answer contradicts `snapshot.md` or the code, show both,
+  with the path, and ask which is right before it goes into the brief.
+- A question of fact (how often the problem happens, how customers cope today, why now) isn't a
+  decision. When the user doesn't know, or only accepts your recommended answer, write it into the
+  brief as an assumption to verify, under Riskiest assumptions, not as a fact.
 - A question about how something should look or feel can't be settled by talking. Once the MVP
   scope it shows is settled, make a quick throwaway HTML mockup in the idea's folder
   (`mockup-<n>.html`), give its path, and ask about it in one line.

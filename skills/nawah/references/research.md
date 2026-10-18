@@ -36,6 +36,10 @@ sections that depend on it Low confidence.
 
 ## Merge
 - Keep each finding as returned, grouped by topic.
+- Check the figures the report's model will use: market sizes, prices, CAC, churn, the exchange rate
+  and the developer cost. Open each one's source and confirm the value is on that page, for the
+  same year, region and currency. A value that isn't there is dropped, or kept as an Estimate with
+  its basis; write how many under Gaps.
 - Number every source once, `[1]`, `[2]`…, across all topics. The report's `sources[].id` reuse
   these numbers.
 - Duplicates (same claim, same source): keep one.
