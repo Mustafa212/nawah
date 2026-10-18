@@ -1,5 +1,6 @@
 // Structural lint of a nawah backlog.md: ids and nesting, labels, story wording, acceptance criteria,
 // duplicate ids, points, priorities, releases, dependencies (unknown, cycles, later releases) and traceability.
+// Only MVP features get stories; a v1 or v2 feature stops at its Size and Open questions.
 // Usage: node tests/lint_backlog.js <backlog.md>   prints one problem per line; exit 1 when there are any.
 const fs = require('fs');
 
@@ -12,6 +13,7 @@ const RELEASES = ['MVP', 'v1', 'v2'];
 const ID = { 2: /^E(\d+)$/, 3: /^F(\d+)\.(\d+)$/, 4: /^S(\d+)\.(\d+)\.(\d+)$/ };
 const TYPE = { 2: 'E', 3: 'F', 4: 'S' };
 const order = (r) => RELEASES.indexOf(r);
+const later = (it) => it.type === 'F' && ['v1', 'v2'].includes(it.fields.Release);
 
 function lint(text) {
   const problems = [], items = [], trace = [];
@@ -51,10 +53,13 @@ function lint(text) {
   const byId = new Map();
   for (const it of items) { if (byId.has(it.id)) problems.push(`${it.id}: duplicate id`); else byId.set(it.id, it); }
   for (const it of items) {
-    for (const l of LABELS[it.type]) if (!(l in it.fields)) problems.push(`${it.id}: missing "${l}:"`);
+    const labels = later(it) ? LABELS.F.concat('Size', 'Open questions') : LABELS[it.type];
+    for (const l of labels) if (!(l in it.fields)) problems.push(`${it.id}: missing "${l}:"`);
     if ('Release' in it.fields && !RELEASES.includes(it.fields.Release)) problems.push(`${it.id}: Release must be MVP, v1 or v2`);
+    if (later(it) && 'Size' in it.fields && !['S', 'M', 'L'].includes(it.fields.Size)) problems.push(`${it.id}: Size must be S, M or L`);
     if (it.type !== 'S') continue;
     const f = it.fields;
+    if (['v1', 'v2'].includes(f.Release)) problems.push(`${it.id}: only MVP stories are written; a ${f.Release} feature stops at its Size and Open questions`);
     if ('Priority' in f && !['Must', 'Should', 'Could'].includes(f.Priority)) problems.push(`${it.id}: Priority must be Must, Should or Could`);
     if ('Points' in f && !['1', '2', '3', '5', '8'].includes(f.Points)) problems.push(`${it.id}: Points must be 1, 2, 3, 5 or 8`);
     if ('Story' in f && !/^As an? .+, I want .+, so that .+/.test(f.Story)) problems.push(`${it.id}: Story must read "As a <role>, I want <capability>, so that <benefit>"`);
@@ -83,7 +88,8 @@ function lint(text) {
     if (it.type === 'S' || !RELEASES.includes(it.fields.Release)) continue;
     const kids = items.filter((k) => k.parent === it.id && RELEASES.includes(k.fields.Release));
     const kind = it.type === 'E' ? 'feature' : 'story';
-    if (!kids.length) { problems.push(`${it.id}: has no ${kind} with a release`); continue; }
+    if (!kids.length && later(it)) continue;
+    if (!kids.length) { problems.push(it.type === 'F' ? `${it.id}: an MVP feature needs at least one story` : `${it.id}: has no feature with a release`); continue; }
     const earliest = kids.map((k) => k.fields.Release).sort((a, b) => order(a) - order(b))[0];
     if (earliest !== it.fields.Release) problems.push(`${it.id}: Release is ${it.fields.Release}, but its earliest ${kind} is ${earliest}`);
   }

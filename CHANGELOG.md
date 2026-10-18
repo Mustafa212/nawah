@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.3.0 — 2026-10-18
+- Backlog: full stories (Given/When/Then, points) for the MVP's features only. A v1 or v2 feature
+  stops at its Size (S, M or L) and Open questions: what its stories wait for, usually the riskiest
+  assumptions the MVP tests. Why: stories written before the MVP tests those assumptions go stale
+  and sit in the tracker looking finished. The lint and the backlog reviewer check it; a tracker
+  that keeps features as labels or tags lists the later features in their epic's description.
+- Report model: `backlog.pointsByRelease` holds the MVP's points; releases without points keep the
+  capability sizing in the duration and build cost, and the drift compares only the releases both
+  estimate. Why: with MVP-only points, v1 and v2 would have dropped out of the duration.
+
 ## 1.2.0 — 2026-10-18
 - Research: a figure a page quotes from another source is traced to that source and cited there (the
   quoting page is Medium at most), and a URL seen only in search results is Low. At merge, the lead
