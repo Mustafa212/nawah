@@ -28,4 +28,8 @@ check "the good backlog passes" 'node "$l" "$f/backlog-good.md"'
 check "the bad backlog fails" '! node "$l" "$f/backlog-bad.md" >/dev/null'
 actual="$(node "$l" "$f/backlog-bad.md" | sort)"
 check "the bad backlog's problems are named, and only those" '[ "$actual" = "$(printf "%s\n" "$expected" | sort)" ]'
+check "stories for every release: a v1 story passes" 'node "$l" "$f/backlog-good-all.md"'
+all_missing="$(mktemp)"; sed 's/^Stories for: mvp$/Stories for: all/' "$f/backlog-good.md" >"$all_missing"
+check "stories for every release: a v1 feature with no story fails, and only it" '[ "$(node "$l" "$all_missing")" = "F2.2: a feature needs at least one story when stories are written for every release" ]'
+rm -f "$all_missing"
 [ "$failures" -eq 0 ] && echo "backlog lint tests pass" || { printf 'actual:\n%s\n' "$actual"; exit 1; }

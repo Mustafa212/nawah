@@ -1,5 +1,30 @@
 # Changelog
 
+## 1.4.0 — 2026-10-18
+- Trackers through MCP only: `Connection: mcp:<server>` replaces the token, curl and `gh` paths, and
+  each adapter maps every operation to the server's tools. Why: one server per project, added at
+  local scope in the project's folder, keeps each project on its own org or site, nothing in git, and
+  no token in nawah's hands.
+- Setup finds a local server that matches the tracker or gives the exact `claude mcp add --scope
+  local` command from each server's own docs (Azure DevOps local or remote, GitHub's remote server,
+  Atlassian's), then a restart and `/nawah resume`; a project file with `token:` or `gh` is offered
+  the migration. Why: servers connect when a session starts, and the user, not nawah, runs the
+  command that holds the sign-in or token.
+- An operation a server lacks gets an MCP alternative, written on `push-log.md`'s new
+  `Alternatives:` line: on GitHub, releases become `release:*` labels when the milestones don't
+  exist, and dependencies become a comment when `issue_dependency_write` isn't offered. Why: the
+  push stays MCP-only and the log shows what was replaced.
+- Hard gate 7 (secrets): nawah never asks for, reads, prints or writes a token.
+- Step 6 asks once whether to write stories for the MVP only (the default and the recommendation:
+  later stories go stale before the MVP tests the riskiest assumptions) or for every release, and
+  records it in `state.md` (`Stories:`) and the backlog (`Stories for:`). `all` restores full
+  stories and points for every release; the lint, the backlog reviewer's R7 and the report's
+  `pointsByRelease` follow the choice, and Gate 3 names it. Why: some teams need the whole backlog
+  in the tracker up front, and the choice is theirs, not the plugin's.
+- The skill description keeps its triggers and what it delivers (723 → 497 characters), since it
+  loads into every session. A trigger eval (3 prompts that must fire, 2 that must not, 2 runs each)
+  passed on both the old and the new wording.
+
 ## 1.3.0 — 2026-10-18
 - Backlog: full stories (Given/When/Then, points) for the MVP's features only. A v1 or v2 feature
   stops at its Size (S, M or L) and Open questions: what its stories wait for, usually the riskiest

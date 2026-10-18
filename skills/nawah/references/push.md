@@ -8,7 +8,7 @@ Contents: Before the first call · Order · Fields · push-log.md · Reruns and 
 - Read the project file and `references/trackers/<Tracker>.md`. Run its `connect`; on failure show
   the error and the fix, offer the CSV instead, and stop with `Next:` saying what to fix.
 - At a Gate 3 yes, write `push-log.md`'s header (below) before the first call; otherwise read it.
-- Request bodies go in `ideas/<slug>/.push/` (create it); never a token in them.
+- Every call goes through the project's MCP server (`Connection:`); no token in any argument.
 
 ## Order
 1. Epics, in id order; then features; then stories.
@@ -17,8 +17,8 @@ Contents: Before the first call · Order · Fields · push-log.md · Reruns and 
 3. A feature the tracker keeps as a label or tag (Jira without a level above Epic, Azure DevOps
    Basic; see `Detected:` and the adapter) isn't created: log it with Tracker id `label:<label>`
    (Jira, for example `label:feature-shop-sign-up`) or `tag:<tag>` (Azure DevOps), URL `-`, `Pending:
-   none`. Its stories take the epic as parent and carry that label or tag. A v1 or v2 feature there
-   has no stories to carry it, so it goes into its epic's description under "Later features" (title,
+   none`. Its stories take the epic as parent and carry that label or tag. With `Stories for: mvp`, a v1
+   or v2 feature there has no stories to carry it, so it goes into its epic's description under "Later features" (title,
    Size, Open questions) and is logged with Tracker id `in-epic:<epic local id>`.
 4. Create each item with its parent link in the same call when the tracker allows it (see the
    adapter). Write its push-log row as soon as the call returns, before the next call, with `Pending`
@@ -46,6 +46,7 @@ What goes where is in the adapter. From `backlog.md`:
 # Push log — <slug>
 Target: <tracker> <url> <tracker project>
 Approved: <e> epics, <f> features, <s> stories, <YYYY-MM-DD>
+Alternatives: <none | what the server couldn't do and what replaced it>
 
 | Local id | Tracker id | URL | Created at | Hash | Pending |
 |---|---|---|---|---|---|
@@ -58,6 +59,9 @@ Approved: <e> epics, <f> features, <s> stories, <YYYY-MM-DD>
 - `Hash`: `bash "${CLAUDE_PLUGIN_ROOT}/scripts/item-hash.sh" "<backlog.md>" <local id>`, at create
   time. `Created at`: `date -u +%Y-%m-%dT%H:%MZ`.
 - `Pending`: the links still missing, as a list: `parent`, `deps`, `parent, deps`, or `none`.
+- `Alternatives:` each operation the MCP server lacks and the MCP call used instead, from the
+  adapter (for example `releases as labels: no milestone tool`, `dependencies as comments: no
+  dependency tool`), written before the first call and shown in the push summary.
 
 ## Reruns and resume
 - A local id already in the log is never created again.

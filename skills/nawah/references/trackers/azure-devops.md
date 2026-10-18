@@ -1,49 +1,41 @@
 # Tracker: Azure DevOps
 
 *nawah adapter. Project file: `Tracker: azure-devops`, `URL: https://dev.azure.com/<org>`,
-`Tracker project: <project>`, `Connection: token:<ENV_VAR>` (a PAT with Work Items read & write) or
-`mcp:<server>`.*
+`Tracker project: <project>`, `Connection: mcp:<server>` (the Azure DevOps MCP server for that org;
+`references/setup.md`).*
 
-Contents: Transport · Operations · Create body · CSV
+Contents: Transport · Operations · Create fields · CSV
 
 ## Transport
-- `token:`: REST API 7.1 with curl: `curl -sS -u ":$<ENV_VAR>" -H "Accept: application/json"`.
-  `$ORG` is the URL, `$PROJECT` the project name (spaces as `%20` in paths). Write each request body
-  with the Write tool to `ideas/<slug>/.push/body.json` and send it with `--data-binary
-  @<path>`; save the response with `-o ideas/<slug>/.push/response.json` and read the fields you
-  need. Check the HTTP status with `-w '%{http_code}'`.
-- `mcp:<server>`: the named server's tools for projects, work item types, queries, creating work
-  items and linking them. Same fields and rules as below.
+The named server's tools, which take an `action` argument. The local server (`@azure-devops/mcp`)
+and the remote one (`mcp.dev.azure.com`) share the names below; where they differ, it says so.
 
 ## Operations
 
 | Operation | How |
 |---|---|
-| connect | `GET $ORG/_apis/projects/$PROJECT?api-version=7.1` returns 200 with the project's `id`. 401 or 203 (a sign-in page): the token is wrong or expired. 404: the project name is wrong. MCP: the server's project tool finds `$PROJECT`. |
-| detect | `GET $ORG/$PROJECT/_apis/wit/workitemtypes?api-version=7.1`: a `User Story` type → Agile; `Product Backlog Item` → Scrum; `Requirement` → CMMI; otherwise `Issue` → Basic. Then `GET $ORG/$PROJECT/_apis/wit/workitemtypes/<story type>/fields?api-version=7.1` (type URL-encoded): is `Microsoft.VSTS.Common.AcceptanceCriteria` there, and which points field (`Microsoft.VSTS.Scheduling.StoryPoints` in Agile, `…Effort` in Scrum and Basic, `…Size` in CMMI). Write `Detected: <process>; story type <type>; AC field <yes/no>; points <field>`. |
-| read_backlog | `POST $ORG/$PROJECT/_apis/wit/wiql?api-version=7.1` with `{"query": "SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = @project AND [System.WorkItemType] IN (<the epic, feature and story types from `Detected:`; Basic has no Feature, so `'Epic', 'Issue'`>) AND [System.State] <> 'Removed' ORDER BY [System.Id]"}`; then `GET $ORG/$PROJECT/_apis/wit/workitems?ids=<up to 200 ids>&fields=System.Id,System.Title,System.State,System.WorkItemType,System.Parent&api-version=7.1`. |
-| create | `POST $ORG/$PROJECT/_apis/wit/workitems/$<type>?api-version=7.1` (the `$` is literal, the type URL-encoded: `$User%20Story`; put the URL in single quotes so the shell doesn't expand `$User`), header `Content-Type: application/json-patch+json`, body below. Use the response's `id` and `_links.html.href`. |
-| link | Dependency (the item depends on a predecessor): `PATCH $ORG/$PROJECT/_apis/wit/workitems/<id>?api-version=7.1`, `Content-Type: application/json-patch+json`, body `[{"op": "add", "path": "/relations/-", "value": {"rel": "System.LinkTypes.Dependency-Reverse", "url": "$ORG/$PROJECT/_apis/wit/workItems/<predecessor id>"}}]`. A parent link that failed at create: the same with `System.LinkTypes.Hierarchy-Reverse` and the parent's URL. |
+| connect | `core_list_projects` lists `$PROJECT`. Not listed: wrong project name, or the account has no access to it. |
+| detect | `wit_work_item` `get_type` for `User Story` → Agile; else `Product Backlog Item` → Scrum; else `Requirement` → CMMI; else `Issue` → Basic. From the story type's fields: is `Microsoft.VSTS.Common.AcceptanceCriteria` there, and which points field (`Microsoft.VSTS.Scheduling.StoryPoints` in Agile, `…Effort` in Scrum and Basic, `…Size` in CMMI). Write `Detected: <process>; story type <type>; AC field <yes/no>; points <field>`. |
+| read_backlog | WIQL `SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = @project AND [System.WorkItemType] IN (<the epic, feature and story types from `Detected:`; Basic has no Feature, so `'Epic', 'Issue'`>) AND [System.State] <> 'Removed' ORDER BY [System.Id]` through `wit_query` `wiql` (local server) or `wit_query_by_wiql` (remote, MCP Insiders); without either, `search_workitem` for the project's items. Then `wit_work_item` `get_batch` (up to 200 ids) for Id, Title, State, WorkItemType and Parent. |
+| create | `wit_work_item_write` `create` with the type and the fields below. Use the result's `id` and its web URL. The parent goes on with `link` right after (`Pending: parent` until then). |
+| link | `wit_work_item_link_write` `link` from the item: type `predecessor` to each item it depends on (`System.LinkTypes.Dependency-Reverse`), type `parent` to its parent (`System.LinkTypes.Hierarchy-Reverse`). |
 | csv_format | Below. |
 
-## Create body
+## Create fields
 
-```json
-[
-  {"op": "add", "path": "/fields/System.Title", "value": "<title>"},
-  {"op": "add", "path": "/fields/System.Description", "value": "<HTML description>"},
-  {"op": "add", "path": "/fields/Microsoft.VSTS.Common.AcceptanceCriteria", "value": "<ol><li>Given … When … Then …</li></ol>"},
-  {"op": "add", "path": "/fields/<points field>", "value": 3},
-  {"op": "add", "path": "/fields/Microsoft.VSTS.Common.Priority", "value": 1},
-  {"op": "add", "path": "/fields/System.Tags", "value": "nawah; nawah:<slug>; MVP"},
-  {"op": "add", "path": "/fields/System.AreaPath", "value": "<default area path>"},
-  {"op": "add", "path": "/relations/-", "value": {"rel": "System.LinkTypes.Hierarchy-Reverse", "url": "$ORG/$PROJECT/_apis/wit/workItems/<parent id>"}}
-]
-```
+| Field | Value |
+|---|---|
+| `System.Title` | `<title>` |
+| `System.Description` | `<HTML description>` |
+| `Microsoft.VSTS.Common.AcceptanceCriteria` | `<ol><li>Given … When … Then …</li></ol>` |
+| `<points field>` | `3` |
+| `Microsoft.VSTS.Common.Priority` | `1` |
+| `System.Tags` | `nawah; nawah:<slug>; MVP` |
+| `System.AreaPath` | `<default area path>` |
 
 - Leave out: the AC line when `Detected` says no AC field (the criteria go in the description under
   `<h3>Acceptance criteria</h3>`); points and priority for epics and features; the area path when
-  there's no default; the relation for items without a parent.
+  there's no default; the parent link for items without a parent.
 - Priority: Must 1, Should 2, Could 3.
 - Basic process (no Feature type): a feature isn't created (`references/push.md`); a story's parent
   is its epic, and its feature becomes the tag `feature:<feature title>`.

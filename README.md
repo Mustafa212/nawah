@@ -5,7 +5,7 @@
 nawah (نواة, a seed) is a Claude Code plugin. Give it an idea, new or for a product you already have,
 and it:
 
-1. thinks the idea through with you, one question at a time, until you approve a one-page **Idea Brief**;
+1. thinks the idea through with you, in rounds of questions, until you approve a one-page **Idea Brief**;
 2. researches the market, local and global competitors, prices and regulation, with a source for every claim;
 3. writes a polished **report** for investors, management or a client (Arabic or English): market size,
    competition and positioning, revenue model and three-scenario financials, go-to-market, delivery plan
@@ -38,8 +38,8 @@ reaches a tracker without your yes.
 - Edge, Chrome or Chromium for the PDF (or set `NAWAH_BROWSER`). Without one, you get the HTML report and
   print it yourself. Snap-packaged Chromium can't open files in hidden folders such as `~/.claude`: set
   `NAWAH_BROWSER` to another browser, or `NAWAH_HOME` to a visible folder.
-- For a tracker: Azure DevOps (a PAT in an env var, or an MCP server), Jira Cloud (an API token and your
-  e-mail in env vars, or an MCP server), or GitHub (`gh`, logged in). nawah stores only env var names.
+- For a tracker: its MCP server, added at local scope in the project's folder (Azure DevOps, GitHub or
+  Atlassian's; `/nawah setup` gives the command). nawah never handles a token.
 
 ## Trackers
 

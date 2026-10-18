@@ -121,6 +121,11 @@ t('computeAll: the backlog replaces the sizing and reports the drift', () => {
   assert.strictEqual(c.values.backlogPoints, '120');
   close(c.buildCost.low, 9000 * 8 * 12 / 52); close(c.buildCost.high, 9000 * 11 * 12 / 52);
 });
+t('computeAll: stories for every release: points replace the sizing for v1 as well as the MVP', () => {
+  const c = M.computeAll({ ...data, backlog: { pointsByRelease: { MVP: 80, v1: 40 } } });
+  assert.strictEqual(c.values['weeks.MVP'], '5 – 7');
+  assert.strictEqual(c.values['weeks.v1'], '3 – 4'); // 40 points, half the MVP's 80 (5–7); the sizing alone says 3–9
+});
 t('computeAll: stories for the MVP only keep v1 in the duration, from its sizing', () => {
   const c = M.computeAll({ ...data, backlog: { pointsByRelease: { MVP: 80 } } });
   assert.strictEqual(c.values['weeks.MVP'], '5 – 7');
