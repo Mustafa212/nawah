@@ -1,26 +1,24 @@
 # Tracker: Jira (Cloud)
 
 *nawah adapter. Project file: `Tracker: jira`, `URL: https://<site>.atlassian.net`,
-`Tracker project: <KEY>`, `Connection: token:<ENV_VAR>` with `User env: <ENV_VAR holding the account
-e-mail>`, or `mcp:<server>`.*
+`Tracker project: <KEY>`, `Connection: mcp:<server>` (Atlassian's MCP server; `references/setup.md`).*
 
 Contents: Transport · Operations · Create body · CSV
 
 ## Transport
-- `token:`: REST API v3 with curl: `curl -sS -u "$<USER_ENV>:$<ENV_VAR>" -H "Accept: application/json"
-  -H "Content-Type: application/json"`, base `$URL/rest/api/3`. Bodies and responses in
-  `ideas/<slug>/.push/` as in the Azure DevOps adapter.
-- `mcp:<server>`: the named server's tools for projects, issue search, creating issues and linking.
+The named server's Jira tools, each naming the site `URL` (or its cloud id, when the tool asks for
+one). Atlassian's server lists only its primary tools at first: find the others with `discover` and
+call them through `executeRead` or `executeWrite`.
 
 ## Operations
 
 | Operation | How |
 |---|---|
-| connect | `GET /myself` returns 200 (`accountId`), then `GET /project/<KEY>` returns 200. 401: e-mail or token wrong; 404: key wrong or no access. |
-| detect | `GET /project/<KEY>`: `issueTypes[]` with `hierarchyLevel`. A type at level 2 or above (an Initiative): Epic → that type, Feature → `Epic`. Otherwise Epic → `Epic`, Feature → label `feature-<feature-slug>`. Story → `Story`. Points: `GET /field` → the field named `Story point estimate` (team-managed) or `Story Points` (company-managed); keep its id (`customfield_…`), or none. Releases: `GET /project/<KEY>/versions`: versions named `MVP`, `v1`, `v2` present → fixVersions; else labels `release-mvp`, `release-v1`, `release-v2`. Write all of it to `Detected:`. |
-| read_backlog | `POST /search/jql` with `{"jql": "project = <KEY> AND issuetype in (Epic, Story) AND statusCategory != Done ORDER BY key", "fields": ["summary", "status", "issuetype", "parent"], "maxResults": 100}`; repeat with `nextPageToken` until `isLast` is true. |
-| create | `POST /issue` with the body below; use the response's `key`; URL `$URL/browse/<key>`. |
-| link | Dependency: `POST /issueLink` with `{"type": {"name": "Blocks"}, "outwardIssue": {"key": "<predecessor>"}, "inwardIssue": {"key": "<dependent>"}}`: the predecessor blocks the dependent. |
+| connect | `listJiraProjects` lists `<KEY>`. Not listed: wrong key, no access, or not signed in (`/mcp`). |
+| detect | `listJiraProjectIssueTypesMetadata` for `<KEY>`: issue types with their hierarchy level. A type at level 2 or above (an Initiative): Epic → that type, Feature → `Epic`. Otherwise Epic → `Epic`, Feature → label `feature-<feature-slug>`. Story → `Story`. Points: `getJiraIssueTypeMetaWithFields` for Story → the field named `Story point estimate` (team-managed) or `Story Points` (company-managed); keep its id (`customfield_…`), or none. Releases: `getJiraProjectVersions`: versions named `MVP`, `v1`, `v2` present → fixVersions; else labels `release-mvp`, `release-v1`, `release-v2`. Write all of it to `Detected:`. |
+| read_backlog | `searchJiraIssuesUsingJql` with `project = <KEY> AND issuetype in (Epic, Story) AND statusCategory != Done ORDER BY key` (summary, status, issuetype, parent), every page. |
+| create | `createJiraIssue` with the body below; use the result's `key`; URL `$URL/browse/<key>`. |
+| link | Dependency: `createJiraIssueLink` with type `Blocks` (check the name with `listJiraIssueLinkTypes`), the predecessor as the outward issue and the dependent as the inward one: the predecessor blocks the dependent. |
 | csv_format | Below. |
 
 ## Create body
@@ -46,7 +44,8 @@ Contents: Transport · Operations · Create body · CSV
   stories take the epic as `parent` and carry the label `feature-<feature-slug>`.
 - Labels have no spaces; slugs are kebab-case.
 - Priority isn't set (schemes differ); it's the label `priority-must`, `-should` or `-could`.
-- Description in Atlassian Document Format: one paragraph per field,
+- The fields `createJiraIssue` takes, with these values. Description: Markdown when the tool takes
+  it; in Atlassian Document Format, one paragraph per field,
   `{"type": "paragraph", "content": [{"type": "text", "text": "Story: …"}]}`; then the criteria:
   `{"type": "heading", "attrs": {"level": 3}, "content": [{"type": "text", "text": "Acceptance criteria"}]}`
   and `{"type": "orderedList", "content": [{"type": "listItem", "content": [{"type": "paragraph", "content": [{"type": "text", "text": "Given …"}]}]}]}`.

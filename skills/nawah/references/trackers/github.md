@@ -1,36 +1,32 @@
 # Tracker: GitHub Issues
 
-*nawah adapter. Project file: `Tracker: github`, `URL: github.com/<owner>/<repo>`, `Connection: gh`
-(or `mcp:<server>`).*
+*nawah adapter. Project file: `Tracker: github`, `URL: github.com/<owner>/<repo>`, `Connection:
+mcp:<server>` (GitHub's MCP server with the `default` and `labels` toolsets; `references/setup.md`).*
 
 ## Transport
-The GitHub CLI: `gh api` with request bodies written to `ideas/<slug>/.push/body.json` and sent with
-`--input`; responses read with `--jq`. MCP: the named server's issue tools.
+The named server's tools, with `owner` and `repo` from `URL`. A write tool takes a `method`.
 
 ## Operations
 
 | Operation | How |
 |---|---|
-| connect | `gh auth status` succeeds, and `gh api repos/<owner>/<repo> --jq .permissions.push` prints `true`. |
-| detect | Issue types: `gh api graphql -f query='query { repository(owner: "<owner>", name: "<repo>") { issueTypes(first: 25) { nodes { name } } } }'`; names for epic, feature and story present → issue types, else labels `type:epic`, `type:feature`, `type:story`. Milestones: `gh api "repos/<owner>/<repo>/milestones?state=all" --paginate --jq '.[] \| "\(.number) \(.title)"'`. Write `Detected: types <names \| labels>; milestones <MVP, v1, v2 present>`. |
-| read_backlog | `gh issue list --repo <owner>/<repo> --state open --limit 500 --json number,title,labels,state`. |
-| create | First, once per push: `gh label list --repo <owner>/<repo> --limit 500 --json name --jq '.[].name'`, then `gh label create <name> --repo <owner>/<repo>` (never `--force`: it rewrites an existing label) for each of `nawah`, `nawah:<slug>`, the `type:*` labels when types are labels, and `priority:must`, `priority:should`, `priority:could` that isn't listed; `gh api repos/<owner>/<repo>/milestones -f title=<MVP \| v1 \| v2>` for each release used that has no milestone. Then per item: `gh api repos/<owner>/<repo>/issues --method POST --input <body.json>` → `number`, `id`, `html_url`. Parent: `gh api repos/<owner>/<repo>/issues/<parent number>/sub_issues --method POST -F sub_issue_id=<child id>` (the `id`, not the number). Log the tracker id as `#<number> (id <id>)`. |
-| link | Dependencies, as GitHub's own blocked-by links, so the issue shows as blocked: `gh api repos/<owner>/<repo>/issues/<number>/dependencies/blocked_by --method POST -F issue_id=<predecessor id>` for each predecessor (its `id` from `push-log.md`, not its number). On resume, first `gh api repos/<owner>/<repo>/issues/<number>/dependencies/blocked_by --jq '.[].id'` and skip the ones listed. If the endpoint fails (403, 404 or 410, for example on an older GitHub Enterprise Server), fall back to `gh issue comment <number> --repo <owner>/<repo> --body "Depends on #<n>, #<m>"` and say so in the push summary. A parent link that failed at create: the `sub_issues` POST from `create` again. |
+| connect | `list_issues` (state open, one per page) and `list_label` succeed for the repository. A 401 or an empty answer: the server's token is missing or wrong (`references/setup.md`). |
+| detect | Issue types: `list_issue_types`; names for epic, feature and story present → issue types, else labels `type:epic`, `type:feature`, `type:story`. Milestones: `ui_get` method `milestones`; `MVP`, `v1`, `v2` present → milestones, else the labels `release:MVP`, `release:v1`, `release:v2` (the server can't create milestones). Dependencies: whether the server lists `issue_dependency_write`. Write `Detected: types <names \| labels>; releases <milestones \| labels>; dependencies <links \| comments>`. |
+| read_backlog | `list_issues`, state open, every page; `search_issues` with `repo:<owner>/<repo> is:issue is:open` when listing fails. |
+| create | First, once per push: `list_label`, then `label_write` method `create` (never `update`: it rewrites an existing label) for each of `nawah`, `nawah:<slug>`, the `type:*` labels when types are labels, the `release:*` labels when releases are labels, and `priority:must`, `priority:should`, `priority:could` that isn't listed. Then per item: `issue_write` method `create` with the fields below and `parent_issue_number` for its parent, so the parent is linked in the same call → `number`, `id`, URL. Log the tracker id as `#<number> (id <id>)`. |
+| link | Dependencies: with `issue_dependency_write`, mark the issue blocked by each predecessor (its `id` from `push-log.md`); on resume, first read the existing ones (`issue_dependency_read`) and skip them. Without it: `add_issue_comment` with "Depends on #<n>, #<m>". A parent link that failed at create: `sub_issue_write` method `add` with the child's `id`. |
 | csv_format | GitHub has no CSV import: write the generic CSV and say so. |
 
-## Create body
+## Create fields
 
-```json
-{
-  "title": "<title>",
-  "body": "<markdown>",
-  "labels": ["nawah", "nawah:<slug>", "priority:must"],
-  "milestone": 1,
-  "type": "Story"
-}
-```
+| Field | Value |
+|---|---|
+| `title` | `<title>` |
+| `body` | `<markdown>` |
+| `labels` | `["nawah", "nawah:<slug>", "priority:must"]`, plus `type:*` and `release:*` labels where `Detected:` uses labels |
+| `milestone` | the milestone's number for the item's release, when releases are milestones |
+| `type` | `Story`, when issue types were detected |
 
-- `type` only when issue types were detected; otherwise add the `type:*` label.
-- `milestone` is the milestone's number for the item's release.
 - Body: the item's block from `backlog.md` without its heading, with the acceptance criteria under
   `### Acceptance criteria` as a numbered list.
+- Releases as labels or dependencies as comments: write it on `push-log.md`'s `Alternatives:` line.
