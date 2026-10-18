@@ -1,5 +1,5 @@
 # Backlog — Qahwa Points
-Report version: 2    Total points: 20    Duration: 2 – 4 weeks
+Report version: 2    Total points: 15    Duration: 2 – 4 weeks
 Reference: S1.1.1 = 3 points
 
 ## Traceability
@@ -96,18 +96,5 @@ Open questions: none
 ### F2.2 — Network rewards
 Description: Rewards earned at one shop can be used at another.
 Release: v1
-
-#### S2.2.1 — Redeem a reward at another member shop
-Story: As a regular customer, I want to use a reward at any member shop, so that the network is worth more than one shop's card.
-Value: The difference from every single-shop stamp card.
-Priority: Should
-Release: v1
-Points: 5
-Depends on: S2.1.1
-Acceptance criteria:
-1. Given a customer with a reward from shop A When they redeem it at shop B Then shop B sees it as valid and marks it used
-2. Given a reward already used When it is shown again Then the shop sees "already used" with the date
-3. Given shop B has opted out of network rewards When a customer tries to redeem there Then the app lists the shops that accept it
-Out of scope: Settling money between shops
-NFR: A reward can be redeemed only once, even if two shops scan it at the same time
-Open questions: none
+Size: L
+Open questions: Will shops accept a reward another shop issued? The MVP's riskiest assumption tests whether customers come back for one shop's card first.

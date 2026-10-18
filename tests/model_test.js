@@ -121,6 +121,14 @@ t('computeAll: the backlog replaces the sizing and reports the drift', () => {
   assert.strictEqual(c.values.backlogPoints, '120');
   close(c.buildCost.low, 9000 * 8 * 12 / 52); close(c.buildCost.high, 9000 * 11 * 12 / 52);
 });
+t('computeAll: stories for the MVP only keep v1 in the duration, from its sizing', () => {
+  const c = M.computeAll({ ...data, backlog: { pointsByRelease: { MVP: 80 } } });
+  assert.strictEqual(c.values['weeks.MVP'], '5 – 7');
+  assert.strictEqual(c.values['weeks.v1'], '3 – 9');
+  assert.strictEqual(c.values.durationWeeks, '8 – 16');
+  close(c.drift, 1 / 5); // MVP only: sized 3–7 against points 5–7
+  close(c.buildCost.low, 9000 * 8 * 12 / 52); close(c.buildCost.high, 9000 * 16 * 12 / 52);
+});
 t('computeAll: another currency also gives USD values', () => {
   const v = M.computeAll({ ...data, meta: { ...data.meta, currency: 'EGP', usdRate: 0.02 } }).values;
   assert.strictEqual(v['base.revenueY3.usd'], '$1,464');

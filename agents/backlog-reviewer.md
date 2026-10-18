@@ -22,10 +22,11 @@ check every epic, feature and story against these rules:
   v1 or v2 story.
 - **R6 Duplicates:** two stories covering the same behaviour, or a story duplicating an item in
   `<tracker>` (when given).
-- **R7 Releases:** a feature's release is the earliest of its stories'; an epic's, the earliest of its
-  features'.
+- **R7 Releases:** only MVP features have stories, and each has at least one. A v1 or v2 feature has
+  no stories, a plausible Size (S, M or L) and Open questions that name what its stories wait for. An
+  MVP feature's release is the earliest of its stories'; an epic's, the earliest of its features'.
 - **R8 Format:** every label is present (epic: Goal, Success metric, Release, Parent; feature:
-  Description, Release; story: Story, Value, Priority, Release, Points, Depends on, Acceptance
+  Description, Release, plus Size and Open questions for v1 and v2; story: Story, Value, Priority, Release, Points, Depends on, Acceptance
   criteria, Out of scope, NFR, Open questions); ids `E<n>`, `F<n>.<n>`, `S<n>.<n>.<n>` nest correctly
   and are unique; every Story opens with "As a" or "As an".
 - **R9 Role and wording:** "As a user" without a specific role; a title that names a component

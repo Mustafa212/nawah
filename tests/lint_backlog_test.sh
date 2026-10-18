@@ -18,6 +18,11 @@ S2.1.2: Story must read "As a <role>, I want <capability>, so that <benefit>"
 S3.1.1: id doesn'"'"'t match its parent F2.1
 F2.1: Release is v2, but its earliest story is MVP
 dependency cycle: S2.1.1 → S2.1.2 → S2.1.1
+F1.3: an MVP feature needs at least one story
+F2.1: missing "Size:"
+F2.1: missing "Open questions:"
+S2.1.1: only MVP stories are written; a v2 feature stops at its Size and Open questions
+S3.1.1: only MVP stories are written; a v2 feature stops at its Size and Open questions
 Traceability: unknown story S7.7.7'
 check "the good backlog passes" 'node "$l" "$f/backlog-good.md"'
 check "the bad backlog fails" '! node "$l" "$f/backlog-bad.md" >/dev/null'

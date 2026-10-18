@@ -321,6 +321,16 @@ html[data-nawah="error"] #nawah-error { display: block; position: sticky; top: 0
     return byReleaseTotals(RELEASES.filter((r) => keys.includes(r)).map((r) => [r, pointsDuration(pointsByRelease[r], velocity)]));
   }
 
+  function pick(d, releases) {
+    return byReleaseTotals(releases.map((r) => [r, d.byRelease[r]]));
+  }
+
+  // The backlog estimates only the releases it writes stories for (the MVP); the others keep the capability sizing.
+  function backlogDuration(sized, points) {
+    return byReleaseTotals(RELEASES.filter((r) => points.byRelease[r] || sized.byRelease[r])
+      .map((r) => [r, points.byRelease[r] || sized.byRelease[r]]));
+  }
+
   function drift(a, b) {
     const ma = (a.weeksLow + a.weeksHigh) / 2, mb = (b.weeksLow + b.weeksHigh) / 2;
     return Math.abs(mb - ma) / ma;
@@ -400,14 +410,17 @@ html[data-nawah="error"] #nawah-error { display: block; position: sticky; top: 0
     if (!(m.tam >= m.sam && m.sam >= m.som && m.som > 0)) throw new Error('market must have tam >= sam >= som > 0');
     const sized = sizeDuration(data.capabilities, data.team.developers);
     const pbr = data.backlog && data.backlog.pointsByRelease;
-    const duration = pbr ? pointsDurationByRelease(pbr, teamVelocity(data.team)) : sized;
+    const points = pbr ? pointsDurationByRelease(pbr, teamVelocity(data.team)) : null;
+    const duration = points ? backlogDuration(sized, points) : sized;
+    // The drift compares like with like: the releases both the sizing and the backlog estimate.
+    const both = points ? RELEASES.filter((r) => points.byRelease[r] && sized.byRelease[r]) : [];
     const cost = buildCost(data.team.monthlyCost, duration);
     const mid = (cost.low + cost.high) / 2;
     const out = {
       sized, duration, buildCost: cost,
       unit: unitEconomics(scenarioInputs(data, 'base')),
       scenarios: {},
-      drift: pbr ? drift(sized, duration) : null,
+      drift: !points ? null : both.length ? drift(pick(sized, both), pick(points, both)) : drift(sized, duration),
     };
     for (const s of SCENARIOS) {
       const p = project(scenarioInputs(data, s), mid);

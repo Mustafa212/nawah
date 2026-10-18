@@ -80,6 +80,10 @@ Out of scope: none
 NFR: none
 Open questions: none
 
+### F1.3 — Reports
+Description: An MVP feature with no story.
+Release: MVP
+
 ## E2 — Rewards
 Goal: Rewards.
 Success metric: 20 % redeem.

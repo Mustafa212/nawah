@@ -74,7 +74,7 @@ The template's own block is a complete example. Fields:
 | `scenarios.conservative`, `.base`, `.optimistic` | Overrides of `assumptions`; `base` is usually `{}`. |
 | `team.developers`, `team.monthlyCost`, `team.velocity` | From intake. `velocity` only when the team has a real one: `[low, high]` points per two-week sprint for the whole team. |
 | `capabilities` | `{name, release, size}`: one per capability in the brief's scope; release `MVP`, `v1` or `v2`; size `S`, `M` or `L` (an XL is split). |
-| `backlog.pointsByRelease` | Only from step 6. |
+| `backlog.pointsByRelease` | Only from step 6: the MVP's story points. |
 | `competitors` | `{name, url, scope, x, y}`: scope `local` or `global`; x and y from 0 to 10 on the positioning axes. |
 | `positioning` | `{x: "<axis label>", y: "<axis label>", us: {x, y}}`: the two dimensions buyers choose on, from research. |
 | `assumptionNotes` | `{key, note, source}` per assumption shown in the appendix; no `source` means Estimate. `key` is an assumption name, `team.monthlyCost` or `team.developers`; a free row is `{label, value, note, source}`. |
@@ -116,7 +116,8 @@ dark patterns: fake scarcity, fake reviews, hidden costs, hard-to-cancel subscri
 ## Duration
 Size each capability: S = 1–2, M = 2–4, L = 4–8 ideal developer-weeks; split anything bigger. The
 model turns sizes into weeks per release with a 0.6–0.8 focus factor and 15–25 % for design, QA
-hardening and release. Step 6 replaces this with the backlog's points.
+hardening and release. Step 6 replaces the MVP's sizing with its stories' points; v1 and v2 keep the
+sizing.
 
 ## Check, review and Gate 2
 1. `report.sh check` prints `ok`.

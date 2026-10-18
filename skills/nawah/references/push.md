@@ -17,7 +17,9 @@ Contents: Before the first call · Order · Fields · push-log.md · Reruns and 
 3. A feature the tracker keeps as a label or tag (Jira without a level above Epic, Azure DevOps
    Basic; see `Detected:` and the adapter) isn't created: log it with Tracker id `label:<label>`
    (Jira, for example `label:feature-shop-sign-up`) or `tag:<tag>` (Azure DevOps), URL `-`, `Pending:
-   none`. Its stories take the epic as parent and carry that label or tag.
+   none`. Its stories take the epic as parent and carry that label or tag. A v1 or v2 feature there
+   has no stories to carry it, so it goes into its epic's description under "Later features" (title,
+   Size, Open questions) and is logged with Tracker id `in-epic:<epic local id>`.
 4. Create each item with its parent link in the same call when the tracker allows it (see the
    adapter). Write its push-log row as soon as the call returns, before the next call, with `Pending`
    listing the links it still lacks: `parent` when the create call didn't link its parent, `deps` when
@@ -30,7 +32,8 @@ Contents: Before the first call · Order · Fields · push-log.md · Reruns and 
 ## Fields
 What goes where is in the adapter. From `backlog.md`:
 - Title: the heading's text after the id and the dash.
-- Epic: Goal and Success metric in the description. Feature: Description.
+- Epic: Goal and Success metric in the description. Feature: Description, and for a v1 or v2 feature
+  its Size and Open questions.
 - Story: Story, Value, Out of scope, NFR and Open questions in the description; the acceptance
   criteria in the tracker's acceptance-criteria field when it has one, else under an "Acceptance
   criteria" heading in the description; Points and Priority in their fields when the tracker has them.
