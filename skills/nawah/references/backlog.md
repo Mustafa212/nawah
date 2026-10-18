@@ -3,8 +3,13 @@
 Contents: Order of work · backlog.md format · Writing stories · Quality rules · Estimates and the report update · Blind review · CSV · Gate 3
 
 ## Order of work
+0. Ask once, unless `state.md` already records `Stories:`: "Stories for the MVP only (recommended:
+   v1 and v2 stories written now go stale before the MVP tests the riskiest assumptions), or full
+   stories for every release?" Write the answer to `state.md` as `Stories: mvp | all`, and use it for
+   the backlog's `Stories for:` line.
 1. Epics from the report's capabilities (one per major capability or user journey), features under
-   them, stories under the MVP's features only (see "Later releases"). Existing-project mode: when new features belong under an epic the
+   them, and stories under the MVP's features only (`mvp`, see "Later releases") or under every
+   feature (`all`). Existing-project mode: when new features belong under an epic the
    tracker already has, write that epic with its title and `Parent: existing <tracker id>`; the push
    doesn't create it again and puts its features under that item. Leave out what the tracker already
    has.
@@ -21,6 +26,7 @@ These labels are a contract: the push and the tracker adapters read them.
 # Backlog — <idea title>
 Report version: <n>    Total points: <n>    Duration: <durationWeeks> weeks
 Reference: <story id> = <points> points
+Stories for: mvp | all
 
 ## Traceability
 | Brief MVP item | Stories |
@@ -36,8 +42,8 @@ Parent: none | existing <tracker id>
 ### F1.1 — <title>
 Description: <text>
 Release: MVP | v1 | v2
-Size: S | M | L                     (v1 and v2 features only)
-Open questions: <what its stories wait for>   (v1 and v2 features only)
+Size: S | M | L                     (v1 and v2 features, Stories for: mvp only)
+Open questions: <what its stories wait for>   (v1 and v2 features, Stories for: mvp only)
 
 #### S1.1.1 — <title>
 Story: As a <role>, I want <capability>, so that <benefit>
@@ -59,10 +65,11 @@ Headings use an em dash (`—`). Ids are numbered in order: `F2.3` is the third 
 `S2.3.1` the first story of `F2.3`.
 
 ## Later releases
-Only MVP features get stories. A v1 or v2 feature stops at its `Size` (S, M or L, the report's
+With `Stories for: mvp` (the default), only MVP features get stories. A v1 or v2 feature stops at its `Size` (S, M or L, the report's
 capability sizing) and `Open questions`: the decisions and results its stories wait for, usually the
 riskiest assumptions the MVP tests. Stories written before the MVP tests those assumptions go stale
-and sit in the tracker looking finished; they're written when that release is planned.
+and sit in the tracker looking finished; they're written when that release is planned. With
+`Stories for: all`, every feature in every release gets stories, written and estimated the same way.
 
 ## Writing stories
 - **Title:** what the user does ("Sign up with a phone number"), not a component ("OTP API").
@@ -84,17 +91,20 @@ and sit in the tracker looking finished; they're written when that release is pl
 2. At least three acceptance criteria in Given/When/Then.
 3. Points 1, 2, 3, 5 or 8. More than 8: split it by workflow step, business rule, data variation or
    interface.
-4. Every brief "MVP scope: In" item maps to at least one story; every story is under an MVP feature,
-   every feature under an epic; every MVP feature has at least one story.
+4. Every brief "MVP scope: In" item maps to at least one story; every feature is under an epic.
+   `mvp`: every story is under an MVP feature, and every MVP feature has at least one story. `all`:
+   every feature has at least one story.
 5. `Depends on` names existing stories, without cycles; an MVP story never depends on a v1 or v2 one.
 6. No duplicates within the backlog or, in existing-project mode, with the tracker's backlog.
-7. An MVP feature's release is the earliest of its stories'; an epic's, the earliest of its features'.
+7. A feature with stories takes the earliest release of its stories; an epic, the earliest of its
+   features'.
 
 ## Estimates and the report update
 - Pick a typical story as the reference (3 points) and size the rest against it; one point is about
   half an ideal developer-day.
-- In `report.html`, set the data block's `backlog.pointsByRelease` to the MVP's points (`{ "MVP": <n> }`;
-  v1 and v2 keep the capability sizing, and the drift compares the MVP alone), raise
+- In `report.html`, set the data block's `backlog.pointsByRelease` to the points per release that has
+  stories: `mvp` → `{ "MVP": <n> }` (v1 and v2 keep the capability sizing, and the drift compares
+  the MVP alone); `all` → every release (`{ "MVP": <n>, "v1": <n>, "v2": <n> }`). Raise
   `meta.version` by one, update the `delivery` section's text if it describes the old range, and run
   `report.sh check` until `ok`.
 - `bash "${CLAUDE_PLUGIN_ROOT}/scripts/report.sh" values "<report.html>"`: read `durationWeeks`,
@@ -122,8 +132,8 @@ adapter's `csv_format`), or the generic format when there is no tracker or it is
 ID,Parent ID,Type,Title,Description,Acceptance Criteria,Priority,Points,Release,Tags
 ```
 
-`ID` and `Parent ID` are the local ids (`E1`, `F1.1`, `S1.1.1`). A v1 or v2 feature's Size and Open
-questions go in its Description. Quote every field with `"`, double
+`ID` and `Parent ID` are the local ids (`E1`, `F1.1`, `S1.1.1`). With `Stories for: mvp`, a v1 or v2
+feature's Size and Open questions go in its Description. Quote every field with `"`, double
 any `"` inside, keep line breaks inside the quotes, UTF-8. The header line is written exactly as
 shown, without quotes.
 
@@ -131,14 +141,15 @@ shown, without quotes.
 Show, in this order:
 1. If the drift is above 20 %: "The backlog changes the report: <sizedWeeks> → <durationWeeks>
    weeks, build cost now <buildCost>."
-2. Counts: epics and features per release, the MVP's stories and points; duration.
+2. Counts: epics and features per release, and the stories and points per release that has them;
+   duration. Say which mode: "Stories for the MVP only" or "Stories for every release".
 3. Open review findings and stories with open questions.
 4. The report update: version <n>, what changed.
 5. The exact target: "<e> epics, <f> features, <s> stories → <tracker> `<url>` / `<project>`, tags
    <the tags or labels every item gets: `nawah`, `nawah:<slug>`; Jira `nawah`, `nawah-<slug>`>".
    When the tracker keeps features as labels (Jira without a level above Epic) or tags (Azure DevOps
    Basic), say "<f> features as labels" (or "as tags"): they aren't created. GitHub: also the labels
-   and milestones the push will create because they don't exist yet. No tracker: "No tracker: the
+   the push will create, and whether releases go as milestones or as `release:*` labels. No tracker: "No tracker: the
    backlog and `backlog.csv` only."
 6. Ask: "Approve the backlog, report version <n> and this push?"
 

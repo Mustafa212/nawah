@@ -27,6 +27,7 @@ Repos: none
 Audience: investor
 Language: en
 Backlog language: en
+Stories: mvp
 Market: Egypt
 Currency: EGP
 Team: 2 developers, EGP 160,000 per month

@@ -11,6 +11,7 @@ Repos: <paths or none>
 Audience: investor | management | client
 Language: ar | en
 Backlog language: en | ar
+Stories: mvp | all | -         (step 6's choice; - until asked)
 Market: <countries>
 Currency: <ISO code>
 Team: <developers, monthly cost, velocity>

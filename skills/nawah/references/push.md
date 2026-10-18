@@ -17,8 +17,8 @@ Contents: Before the first call · Order · Fields · push-log.md · Reruns and 
 3. A feature the tracker keeps as a label or tag (Jira without a level above Epic, Azure DevOps
    Basic; see `Detected:` and the adapter) isn't created: log it with Tracker id `label:<label>`
    (Jira, for example `label:feature-shop-sign-up`) or `tag:<tag>` (Azure DevOps), URL `-`, `Pending:
-   none`. Its stories take the epic as parent and carry that label or tag. A v1 or v2 feature there
-   has no stories to carry it, so it goes into its epic's description under "Later features" (title,
+   none`. Its stories take the epic as parent and carry that label or tag. With `Stories for: mvp`, a v1
+   or v2 feature there has no stories to carry it, so it goes into its epic's description under "Later features" (title,
    Size, Open questions) and is logged with Tracker id `in-epic:<epic local id>`.
 4. Create each item with its parent link in the same call when the tracker allows it (see the
    adapter). Write its push-log row as soon as the call returns, before the next call, with `Pending`

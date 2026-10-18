@@ -15,6 +15,12 @@
   exist, and dependencies become a comment when `issue_dependency_write` isn't offered. Why: the
   push stays MCP-only and the log shows what was replaced.
 - Hard gate 7 (secrets): nawah never asks for, reads, prints or writes a token.
+- Step 6 asks once whether to write stories for the MVP only (the default and the recommendation:
+  later stories go stale before the MVP tests the riskiest assumptions) or for every release, and
+  records it in `state.md` (`Stories:`) and the backlog (`Stories for:`). `all` restores full
+  stories and points for every release; the lint, the backlog reviewer's R7 and the report's
+  `pointsByRelease` follow the choice, and Gate 3 names it. Why: some teams need the whole backlog
+  in the tracker up front, and the choice is theirs, not the plugin's.
 - The skill description keeps its triggers and what it delivers (723 → 497 characters), since it
   loads into every session. A trigger eval (3 prompts that must fire, 2 that must not, 2 runs each)
   passed on both the old and the new wording.

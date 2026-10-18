@@ -1,6 +1,7 @@
 # Backlog — Qahwa Points
 Report version: 2    Total points: 15    Duration: 2 – 4 weeks
 Reference: S1.1.1 = 3 points
+Stories for: mvp
 
 ## Traceability
 | Brief MVP item | Stories |
