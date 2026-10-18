@@ -4,13 +4,19 @@ Goal: an idea the user recognises as theirs, sharp enough to research. Nothing i
 Gate 1.
 
 ## How to ask
-- One question per message. Offer 2–4 choices with your recommendation first when you can; ask an
-  open question when choices would put words in the user's mouth.
+- Ask in rounds. A round holds every question you can ask now, the ones whose answer doesn't hang
+  on another question still open; a question that does waits for a later round. Number them, give
+  each your recommended answer on its own `➡️` line, and word it so "yes" accepts that answer. Ask
+  an open question, with no recommendation, when one would put words in the user's mouth. The
+  user answers by number; work out the next round from those answers.
 - Start from what the request already says; never ask what it answers.
 - Existing-project mode: start from `snapshot.md`: which current users the idea serves, what it
   changes, what it must not break.
-- Stop when every brief section below has an answer the user gave or confirmed; usually 4–8
-  questions.
+- A question about how something should look or feel can't be settled by talking. Once the MVP
+  scope it shows is settled, make a quick throwaway HTML mockup in the idea's folder
+  (`mockup-<n>.html`), give its path, and ask about it in one line.
+- Stop when every brief section below, and every question its answers opened, has an answer the
+  user gave or confirmed.
 
 ## What to find out
 1. **Customer and problem:** who has the problem, how often, how they cope today. The current
